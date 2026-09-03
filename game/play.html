@@ -4374,6 +4374,7 @@ function _getGroundFoodSprite(type) {
   _GROUND_FOOD_SPRITES.set(key, spriteCanvas);
   return spriteCanvas;
 }
+for (const _foodType of GROUND_FOOD_TYPES) _getGroundFoodSprite(_foodType);
 
 function spawnGroundFood() {
   if (groundFood.length >= GROUND_FOOD_MAX) return;

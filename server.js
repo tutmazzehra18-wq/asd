@@ -51,6 +51,7 @@ const dataFile = process.env.DATA_FILE || path.join(__dirname, 'forest-data.json
 const authSecret = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.AUTH_SECRET) console.warn('[Security] AUTH_SECRET is not set; tokens will reset after restart.');
 const allowedOrigins = new Set((process.env.ALLOWED_ORIGINS || 'https://forestbrawl.fun,http://localhost:3000').split(',').map(origin => origin.trim()).filter(Boolean));
+const staticFileMetadata = new Map();
 let worldSeed = Math.floor(Math.random() * 0x7fffffff);
 let nextMobId = 1;
 const airdrops = new Map();
@@ -771,8 +772,17 @@ function serveStatic(request, response, requestPath) {
     }
     const extension = path.extname(filePath).toLowerCase();
     const isHtmlOrCode = ['.html', '.js', '.css', '.svg', '.json'].includes(extension);
-    const fileStats = fs.statSync(filePath);
-    let etag = `"${data.length.toString(16)}-${Math.round(fileStats.mtimeMs).toString(16)}"`;
+    let metadata = staticFileMetadata.get(filePath);
+    if (!metadata) {
+      const fileStats = fs.statSync(filePath);
+      metadata = {
+        etag: `"${data.length.toString(16)}-${Math.round(fileStats.mtimeMs).toString(16)}"`,
+        lastModified: fileStats.mtime.toUTCString(),
+      };
+      staticFileMetadata.set(filePath, metadata);
+      if (staticFileMetadata.size > 512) staticFileMetadata.delete(staticFileMetadata.keys().next().value);
+    }
+    const etag = metadata.etag;
     if (request.headers['if-none-match'] === etag) {
       response.writeHead(304, { 'ETag': etag, 'Cache-Control': isHtmlOrCode ? 'no-cache' : 'public, max-age=86400' });
       response.end();
@@ -790,7 +800,7 @@ function serveStatic(request, response, requestPath) {
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Cross-Origin-Resource-Policy': 'same-origin',
       'ETag': etag,
-      'Last-Modified': fileStats.mtime.toUTCString(),
+      'Last-Modified': metadata.lastModified,
       'Cache-Control': isHtmlOrCode ? 'no-cache' : 'public, max-age=86400',
       };
       if (responseEncoding) {
