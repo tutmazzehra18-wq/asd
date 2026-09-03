@@ -12424,7 +12424,7 @@ function update(timestamp = 0) {
           _fpsEl.style.color = _fc2;
         }
         // ── Update detailed perf panel (every 3×8=24 frames ~2.5×/sec) ──────
-        if (_perfEl && _perfEl.style.display !== 'none' && window._perf && performance.now() - _perfPanelLastUpdate >= 500) {
+        if (_perfEl && _perfEl.style.display !== 'none' && window._perf && performance.now() - _perfPanelLastUpdate >= 1000) {
           _perfPanelLastUpdate = performance.now();
           const _p = window._perf;
           const _fms = _p.frameMs;
