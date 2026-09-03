@@ -3,6 +3,7 @@ const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 const crypto = require('crypto');
+const zlib = require('zlib');
 const { Server } = require('socket.io');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -50,6 +51,7 @@ const dataFile = process.env.DATA_FILE || path.join(__dirname, 'forest-data.json
 const authSecret = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.AUTH_SECRET) console.warn('[Security] AUTH_SECRET is not set; tokens will reset after restart.');
 const allowedOrigins = new Set((process.env.ALLOWED_ORIGINS || 'https://forestbrawl.fun,http://localhost:3000').split(',').map(origin => origin.trim()).filter(Boolean));
+const staticFileMetadata = new Map();
 let worldSeed = Math.floor(Math.random() * 0x7fffffff);
 let nextMobId = 1;
 const airdrops = new Map();
@@ -769,24 +771,54 @@ function serveStatic(request, response, requestPath) {
       return;
     }
     const extension = path.extname(filePath).toLowerCase();
-    const isHtmlOrCode = ['.html', '.js', '.css'].includes(extension);
-    let etag = `"${data.length.toString(16)}-${Math.round(fs.statSync(filePath).mtimeMs).toString(16)}"`;
+    const isHtmlOrCode = ['.html', '.js', '.css', '.svg', '.json'].includes(extension);
+    let metadata = staticFileMetadata.get(filePath);
+    if (!metadata) {
+      const fileStats = fs.statSync(filePath);
+      metadata = {
+        etag: `"${data.length.toString(16)}-${Math.round(fileStats.mtimeMs).toString(16)}"`,
+        lastModified: fileStats.mtime.toUTCString(),
+      };
+      staticFileMetadata.set(filePath, metadata);
+      if (staticFileMetadata.size > 512) staticFileMetadata.delete(staticFileMetadata.keys().next().value);
+    }
+    const etag = metadata.etag;
     if (request.headers['if-none-match'] === etag) {
       response.writeHead(304, { 'ETag': etag, 'Cache-Control': isHtmlOrCode ? 'no-cache' : 'public, max-age=86400' });
       response.end();
       return;
     }
-    response.writeHead(200, {
+    const acceptsBr = /\bbr\b/i.test(request.headers['accept-encoding'] || '');
+    const acceptsGzip = /\bgzip\b/i.test(request.headers['accept-encoding'] || '');
+    const compressible = isHtmlOrCode && data.length > 1024;
+    const encoding = compressible && acceptsBr ? 'br' : compressible && acceptsGzip ? 'gzip' : null;
+    const sendResponse = (body, responseEncoding = encoding) => {
+      const headers = {
       'Content-Type': mime[extension] || 'application/octet-stream',
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'SAMEORIGIN',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Cross-Origin-Resource-Policy': 'same-origin',
       'ETag': etag,
-      'Last-Modified': fs.statSync(filePath).mtime.toUTCString(),
+      'Last-Modified': metadata.lastModified,
       'Cache-Control': isHtmlOrCode ? 'no-cache' : 'public, max-age=86400',
+      };
+      if (responseEncoding) {
+        headers['Content-Encoding'] = responseEncoding;
+        headers.Vary = 'Accept-Encoding';
+      }
+      response.writeHead(200, headers);
+      response.end(body);
+    };
+    if (encoding === 'br') zlib.brotliCompress(data, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } }, (compressionError, body) => {
+      if (compressionError) return sendResponse(data, null);
+      sendResponse(body);
     });
-    response.end(data);
+    else if (encoding === 'gzip') zlib.gzip(data, { level: 6 }, (compressionError, body) => {
+      if (compressionError) return sendResponse(data, null);
+      sendResponse(body);
+    });
+    else sendResponse(data);
   });
 }
 
