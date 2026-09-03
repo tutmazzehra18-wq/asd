@@ -4314,6 +4314,41 @@ let groundFood = [];
 const GROUND_FOOD_MAX = 80;
 const GROUND_FOOD_COLLECT_RADIUS = 38;
 const _GROUND_FOOD_SPRITES = new Map();
+const _GROUND_FOOD_CELL_SIZE = 240;
+const _groundFoodCells = new Map();
+const _groundFoodVisible = [];
+let _groundFoodVisibleDirty = true;
+let _groundFoodViewKey = '';
+
+function _groundFoodCellKey(x, y) {
+  return `${Math.floor(x / _GROUND_FOOD_CELL_SIZE)},${Math.floor(y / _GROUND_FOOD_CELL_SIZE)}`;
+}
+function _indexGroundFood(food) {
+  const key = _groundFoodCellKey(food.x, food.y);
+  let bucket = _groundFoodCells.get(key);
+  if (!bucket) _groundFoodCells.set(key, bucket = []);
+  bucket.push(food);
+  food._cellKey = key;
+}
+function _unindexGroundFood(food) {
+  const bucket = _groundFoodCells.get(food._cellKey);
+  if (!bucket) return;
+  const index = bucket.indexOf(food);
+  if (index >= 0) bucket.splice(index, 1);
+  if (bucket.length === 0) _groundFoodCells.delete(food._cellKey);
+}
+function _removeGroundFood(index) {
+  const food = groundFood[index];
+  _unindexGroundFood(food);
+  const last = groundFood.pop();
+  if (index < groundFood.length) {
+    groundFood[index] = last;
+    const bucket = _groundFoodCells.get(last._cellKey);
+    const lastIndex = bucket ? bucket.indexOf(last) : -1;
+    if (bucket && lastIndex >= 0) bucket[lastIndex] = last;
+  }
+  _groundFoodVisibleDirty = true;
+}
 
 function _getGroundFoodSprite(type) {
   const key = `${type.name}:${_qualityLevel >= 2 ? 'glow' : 'flat'}`;
@@ -4348,7 +4383,10 @@ function spawnGroundFood() {
   const x = Math.cos(angle) * dist;
   const y = Math.sin(angle) * dist;
   const id = globalTime + Math.random();
-  groundFood.push({ x, y, type: t, bob: Math.random() * Math.PI * 2, id, life: 1800 + Math.random() * 1800 });
+  const food = { x, y, type: t, bob: Math.random() * Math.PI * 2, id, life: 1800 + Math.random() * 1800 };
+  groundFood.push(food);
+  _indexGroundFood(food);
+  _groundFoodVisibleDirty = true;
 }
 
 // Pre-spawn initial ground food
@@ -4363,7 +4401,7 @@ function updateGroundFood() {
     const f = groundFood[i];
     f.bob += 0.07;
     f.life--;
-    if (f.life <= 0) { groundFood[i]=groundFood[groundFood.length-1]; groundFood.pop(); continue; }
+    if (f.life <= 0) { _removeGroundFood(i); continue; }
     const dist = Math.hypot(player.x - f.x, player.y - f.y);
     if (dist < GROUND_FOOD_COLLECT_RADIUS) {
       const healAmt = Math.round(player.maxHp * f.type.healPct);
@@ -4383,18 +4421,32 @@ function updateGroundFood() {
       }
       playSound(660, 0.1, 'sine', 0.18);
       updateHpBar();
-      groundFood[i]=groundFood[groundFood.length-1]; groundFood.pop();
+      _removeGroundFood(i);
     }
   }
 }
 
 function drawGroundFood() {
   if (groundFood.length === 0) return;
+  const viewKey = `${Math.floor(_renderCullL / _GROUND_FOOD_CELL_SIZE)},${Math.floor(_renderCullR / _GROUND_FOOD_CELL_SIZE)},${Math.floor(_renderCullT / _GROUND_FOOD_CELL_SIZE)},${Math.floor(_renderCullB / _GROUND_FOOD_CELL_SIZE)}`;
+  if (_groundFoodVisibleDirty || viewKey !== _groundFoodViewKey) {
+    _groundFoodViewKey = viewKey;
+    _groundFoodVisible.length = 0;
+    const minCX = Math.floor(_renderCullL / _GROUND_FOOD_CELL_SIZE);
+    const maxCX = Math.floor(_renderCullR / _GROUND_FOOD_CELL_SIZE);
+    const minCY = Math.floor(_renderCullT / _GROUND_FOOD_CELL_SIZE);
+    const maxCY = Math.floor(_renderCullB / _GROUND_FOOD_CELL_SIZE);
+    for (let cy = minCY; cy <= maxCY; cy++) {
+      for (let cx = minCX; cx <= maxCX; cx++) {
+        const bucket = _groundFoodCells.get(`${cx},${cy}`);
+        if (bucket) _groundFoodVisible.push(...bucket);
+      }
+    }
+    _groundFoodVisibleDirty = false;
+  }
   ctx.save();
-  for (let _gi = 0; _gi < groundFood.length; _gi++) {
-    const f = groundFood[_gi];
-    if (f.x < _renderCullL - 32 || f.x > _renderCullR + 32 ||
-        f.y < _renderCullT - 32 || f.y > _renderCullB + 32) continue;
+  for (let _gi = 0; _gi < _groundFoodVisible.length; _gi++) {
+    const f = _groundFoodVisible[_gi];
     const _fa = f.life < 120 ? f.life / 120 : 1;
     const bobY = Math.sin(f.bob) * 3;
     ctx.globalAlpha = _fa;
@@ -12327,6 +12379,7 @@ function resolveEntitySolidCollision(e, isBoss) {
 // MAIN UPDATE LOOP
 // ============================================================
 let _gameLoopRaf = null;
+let _perfPanelLastUpdate = 0;
 function update(timestamp = 0) {
   _gameLoopRaf = requestAnimationFrame(update);
   // Let rAF match the display (60/120/144). Skipping frames under 14ms caused stutter/flicker.
@@ -12371,7 +12424,8 @@ function update(timestamp = 0) {
           _fpsEl.style.color = _fc2;
         }
         // ── Update detailed perf panel (every 3×8=24 frames ~2.5×/sec) ──────
-        if (_perfEl && _perfEl.style.display !== 'none' && window._perf) {
+        if (_perfEl && _perfEl.style.display !== 'none' && window._perf && performance.now() - _perfPanelLastUpdate >= 500) {
+          _perfPanelLastUpdate = performance.now();
           const _p = window._perf;
           const _fms = _p.frameMs;
           const _tgt = 16.7;
