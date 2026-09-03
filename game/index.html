@@ -2648,6 +2648,7 @@
 
         const bgCanvas = document.getElementById('bgCanvas');
         const bgCtx = bgCanvas ? bgCanvas.getContext('2d') : null;
+        const liveGamePreview = document.getElementById('live-game-preview');
         let bgW = window.innerWidth, bgH = window.innerHeight;
 
         function resizeBackground() {
@@ -2818,7 +2819,7 @@
         function animateMenu() {
             _animFrame++;
 
-            if (bgCtx) {
+            if (bgCtx && !liveGamePreview) {
                 // Kamera Yavaş Sinüzoidal Gezinme
                 const camX = Math.sin(_animFrame * 0.0022) * 160;
                 const camY = Math.cos(_animFrame * 0.0016) * 110;
