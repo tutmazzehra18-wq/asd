@@ -2325,7 +2325,7 @@ function createRenderCanvas(width, height) {
   return fallback;
 }
 window._perf = window._perf || {
-  frameMs:0, renderMs:0, tCamps:0, tTelegraph:0, tGround:0, tBuildings:0, tPlayers:0, tEnemies:0, tParticles:0,
+  frameMs:0, renderMs:0, tCamps:0, tTelegraph:0, tGround:0, tFood:0, tBuildings:0, tPlayers:0, tEnemies:0, tParticles:0,
   ocRebuild:0, eMobs:0, ePlayers:0, eParticles:0, eProjectiles:0, eTelegraphs:0, eBuildings:0, quality:0, shadowBlurActive:0
 };
 
@@ -12052,9 +12052,55 @@ function _decorHash(cx, cy, salt) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
+const _BIOME_DECOR_TILE_CACHE = new Map();
+const _DECOR_CELL_SIZE = 270;
+function _getBiomeDecorTile(cx, cy) {
+  const cacheKey = `${cx},${cy}`;
+  if (_BIOME_DECOR_TILE_CACHE.has(cacheKey)) return _BIOME_DECOR_TILE_CACHE.get(cacheKey);
+  if (_decorHash(cx, cy, 1) > 0.68) {
+    _BIOME_DECOR_TILE_CACHE.set(cacheKey, null);
+    return null;
+  }
+  const px = cx * _DECOR_CELL_SIZE + (0.15 + 0.70 * _decorHash(cx, cy, 2)) * _DECOR_CELL_SIZE;
+  const py = cy * _DECOR_CELL_SIZE + (0.15 + 0.70 * _decorHash(cx, cy, 3)) * _DECOR_CELL_SIZE;
+  if (Math.abs(px) > WORLD - 60 || Math.abs(py) > WORLD - 60) {
+    _BIOME_DECOR_TILE_CACHE.set(cacheKey, null);
+    return null;
+  }
+  const biome = getBiome(px, py);
+  const prefix = _BIOME_DECOR_MAP[biome] || 'orman';
+  const tRoll = _decorHash(cx, cy, 4);
+  const dKey = tRoll < 0.38 ? 'cakil' : tRoll < 0.66 ? 'yonca' : tRoll < 0.80 ? 'ufak_cali' : tRoll < 0.90 ? 'yildiz_bitki' : tRoll < 0.95 ? 'leke_buyuk' : 'leke_uzun';
+  const img = _BIOME_DECOR_SPRITES.get(`${prefix}_${dKey}`);
+  if (!img || !img.complete || img.naturalWidth === 0) return null;
+  const tile = createRenderCanvas(_DECOR_CELL_SIZE, _DECOR_CELL_SIZE);
+  const tileCtx = tile.getContext('2d');
+  const localX = px - cx * _DECOR_CELL_SIZE;
+  const localY = py - cy * _DECOR_CELL_SIZE;
+  const rot = _decorHash(cx, cy, 5) * Math.PI * 2;
+  const scale = 0.92 + _decorHash(cx, cy, 6) * 0.22;
+  const draw = (x, y, w, h, alpha, rotation) => {
+    tileCtx.save(); tileCtx.globalAlpha = alpha; tileCtx.translate(x, y); tileCtx.rotate(rotation);
+    tileCtx.drawImage(img, -w / 2, -h / 2, w, h); tileCtx.restore();
+  };
+  if (dKey === 'cakil') {
+    const angleDir = _decorHash(cx, cy, 7) * Math.PI * 2;
+    const cdx = Math.cos(angleDir), cdy = Math.sin(angleDir);
+    const perpX = -cdy, perpY = cdx;
+    draw(localX, localY, 46 * scale, 46 * scale, 1, rot);
+    draw(localX + cdx * 26 + perpX * 6, localY + cdy * 26 + perpY * 6, 38 * scale, 38 * scale, 1, rot + 1.2);
+    if (_decorHash(cx, cy, 8) < 0.45) draw(localX + cdx * 52 + perpX * 14, localY + cdy * 52 + perpY * 14, 32 * scale, 32 * scale, 1, rot + 2.5);
+  } else if (dKey === 'yonca') draw(localX, localY, 100 * scale, 100 * scale, 0.78, rot);
+  else if (dKey === 'ufak_cali') draw(localX, localY, 60 * scale, 60 * scale, 1, rot);
+  else if (dKey === 'yildiz_bitki') draw(localX, localY, 54 * scale, 54 * scale, 1, rot);
+  else draw(localX, localY, (dKey === 'leke_buyuk' ? 125 : 115) * scale, (dKey === 'leke_buyuk' ? 125 : 75) * scale, 0.48, rot);
+  _BIOME_DECOR_TILE_CACHE.set(cacheKey, tile);
+  return tile;
+}
+
 function drawBiomeDecors(c, scrL, scrR, scrT, scrB) {
   if (_qualityLevel === 0) return; // Low quality mode: skip decorative ground decals for maximum FPS
-  const CELL_SIZE = 270; // Optimized cell size: reduces canvas state changes & drawImage calls by ~60%
+  const CELL_SIZE = _DECOR_CELL_SIZE;
   const minCX = Math.floor(scrL / CELL_SIZE);
   const maxCX = Math.ceil(scrR / CELL_SIZE);
   const minCY = Math.floor(scrT / CELL_SIZE);
@@ -12062,6 +12108,9 @@ function drawBiomeDecors(c, scrL, scrR, scrT, scrB) {
 
   for (let cy = minCY; cy <= maxCY; cy++) {
     for (let cx = minCX; cx <= maxCX; cx++) {
+      const cachedTile = _getBiomeDecorTile(cx, cy);
+      if (cachedTile) c.drawImage(cachedTile, cx * CELL_SIZE, cy * CELL_SIZE);
+      continue;
       const spawnRoll = _decorHash(cx, cy, 1);
       if (spawnRoll > 0.68) continue; // 68% cell spawn rate
 
@@ -12339,7 +12388,7 @@ function update(timestamp = 0) {
           const _budgetPct = (_fms / _tgt * 100)|0;
           const _budgetCol = _budgetPct > 120 ? '#ff5555' : _budgetPct > 80 ? '#ffdd44' : '#44ff88';
           // Top bottleneck
-          const _phases = [['Kamp/Boss', _p.tCamps], ['Telegraph', _p.tTelegraph], ['Zemin', _p.tGround], ['Oyuncular', _p.tPlayers], ['Render Top.', _p.renderMs]];
+          const _phases = [['Kamp/Boss', _p.tCamps], ['Telegraph', _p.tTelegraph], ['Zemin Dekor', _p.tGround], ['Food', _p.tFood], ['Oyuncular', _p.tPlayers], ['Render Top.', _p.renderMs]];
           _phases.sort((a,b)=>b[1]-a[1]);
           const _top = _phases[0];
           _perfEl.innerHTML =
@@ -12350,6 +12399,7 @@ function update(timestamp = 0) {
             `<span style="color:#aaa">🗺️ Kamp/Boss:</span> ${_bar(_p.tCamps, 16)}<br>` +
             `<span style="color:#aaa">⚔️ Telegraph: </span> ${_bar(_p.tTelegraph, 16)}<br>` +
             `<span style="color:#aaa">🌿 Zemin:     </span> ${_bar(_p.tGround, 16)}<br>` +
+            `<span style="color:#aaa">🍄 Food:      </span> ${_bar(_p.tFood, 8)}<br>` +
             `<span style="color:#aaa">👥 Oyuncular:</span> ${_bar(_p.tPlayers, 16)}<br>` +
             `<span style="color:#aaa">🖼️ Toplam:   </span> ${_bar(_p.renderMs, 33)}<br>` +
             `<br><span style="color:#ffcc44;font-weight:bold">NESNE SAYILARI</span><br>` +
@@ -13438,7 +13488,9 @@ function update(timestamp = 0) {
   }
 
   // ── GROUND DETAILS: Direct world-space draw (Instant, perfectly synced with camera) ──
+  const _groundT0 = performance.now();
   drawGroundDetailsDirect(ctx);
+  window._perf.tGround = performance.now() - _groundT0;
 
   // NOTE: cave hook is called AFTER background so cave portals are not covered
   // BUG FIX: removed globalTime % 2 === 0 throttle — it caused caves AND bosses (drawn via the
@@ -13621,7 +13673,9 @@ function update(timestamp = 0) {
   _renderCullT = scrT; _renderCullB = scrB;
 
   // Layer 0: ground food pickups (moomoo.io style)
+  const _foodT0 = performance.now();
   drawGroundFood();
+  window._perf.tFood = performance.now() - _foodT0;
 
   // Layer 0b: loot drops (gold on ground)
   drawLoots();
