@@ -2349,6 +2349,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 let _resizePauseUntil = 0;
 
 let _lastCanvasW = 0, _lastCanvasH = 0;
+let _canvasRect = null;
 function resize() {
   if (Date.now() < _resizePauseUntil) return;
 
@@ -2372,6 +2373,7 @@ function resize() {
     ctx.imageSmoothingQuality = 'low';
     ctx.fillStyle = '#5aaa38';
     ctx.fillRect(0, 0, w, h);
+    _canvasRect = canvas.getBoundingClientRect();
     window._resGrdDirty = true;
   }
 }
@@ -4311,6 +4313,32 @@ const GROUND_FOOD_TYPES = [
 let groundFood = [];
 const GROUND_FOOD_MAX = 80;
 const GROUND_FOOD_COLLECT_RADIUS = 38;
+const _GROUND_FOOD_SPRITES = new Map();
+
+function _getGroundFoodSprite(type) {
+  const key = `${type.name}:${_qualityLevel >= 2 ? 'glow' : 'flat'}`;
+  if (_GROUND_FOOD_SPRITES.has(key)) return _GROUND_FOOD_SPRITES.get(key);
+  const size = Math.ceil(type.radius * 4 + 20);
+  const spriteCanvas = createRenderCanvas(size, size);
+  const spriteCtx = spriteCanvas.getContext('2d');
+  const center = size / 2;
+  spriteCtx.textAlign = 'center';
+  spriteCtx.textBaseline = 'middle';
+  spriteCtx.fillStyle = 'rgba(0,0,0,0.35)';
+  spriteCtx.beginPath(); spriteCtx.arc(center, center + 2, type.radius, 0, Math.PI * 2); spriteCtx.fill();
+  if (_qualityLevel >= 2) { spriteCtx.shadowColor = type.color; spriteCtx.shadowBlur = 10; }
+  spriteCtx.fillStyle = type.color;
+  spriteCtx.beginPath(); spriteCtx.arc(center, center, type.radius, 0, Math.PI * 2); spriteCtx.fill();
+  spriteCtx.shadowBlur = 0;
+  spriteCtx.strokeStyle = 'rgba(255,255,255,0.5)'; spriteCtx.lineWidth = 1.5;
+  spriteCtx.beginPath(); spriteCtx.arc(center, center, type.radius, 0, Math.PI * 2); spriteCtx.stroke();
+  spriteCtx.globalAlpha = 0.9;
+  spriteCtx.font = `${type.radius * 1.4}px Arial`;
+  spriteCtx.fillStyle = '#fff';
+  spriteCtx.fillText(type.emoji, center, center);
+  _GROUND_FOOD_SPRITES.set(key, spriteCanvas);
+  return spriteCanvas;
+}
 
 function spawnGroundFood() {
   if (groundFood.length >= GROUND_FOOD_MAX) return;
@@ -4362,12 +4390,7 @@ function updateGroundFood() {
 
 function drawGroundFood() {
   if (groundFood.length === 0) return;
-  // PERF: single save/restore for all ground food — was N save/restore pairs per frame
-  // Pass 1: shadows (no glow, flat black) — all at once
-  // Pass 2: colored circles — grouped by shadow setting to avoid toggle per item
   ctx.save();
-  ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (let _gi = 0; _gi < groundFood.length; _gi++) {
     const f = groundFood[_gi];
     if (f.x < _renderCullL - 32 || f.x > _renderCullR + 32 ||
@@ -4375,20 +4398,9 @@ function drawGroundFood() {
     const _fa = f.life < 120 ? f.life / 120 : 1;
     const bobY = Math.sin(f.bob) * 3;
     ctx.globalAlpha = _fa;
-    // Shadow circle
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.beginPath(); ctx.arc(f.x, f.y + 2, f.type.radius, 0, Math.PI * 2); ctx.fill();
-    // Colored body + glow at quality 2
-    if (_qualityLevel >= 2) { ctx.shadowColor = f.type.color; ctx.shadowBlur = 10; }
-    ctx.fillStyle = f.type.color;
-    ctx.beginPath(); ctx.arc(f.x, f.y + bobY, f.type.radius, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(f.x, f.y + bobY, f.type.radius, 0, Math.PI * 2); ctx.stroke();
-    if (_qualityLevel >= 2) ctx.shadowBlur = 0;
-    // Emoji label
-    ctx.globalAlpha = _fa * 0.9;
-    ctx.font = `${f.type.radius * 1.4}px Arial`;
-    ctx.fillStyle = '#fff';
-    ctx.fillText(f.type.emoji, f.x, f.y + bobY);
+    const sprite = _getGroundFoodSprite(f.type);
+    const half = sprite.width / 2;
+    ctx.drawImage(sprite, f.x - half, f.y + bobY - half);
   }
   ctx.restore();
 }
@@ -7849,6 +7861,7 @@ const _hpFill = document.getElementById('hp-bar-fill');
 const _hpText = document.getElementById('hp-text');
 // Cached DOM references for hot-path UI updates (set on first call)
 let _uiAppleEl = null, _uiWoodEl = null, _uiStoneEl = null, _uiGoldEl = null, _uiScoreEl = null;
+let _uiFoodBadgeEl = null, _uiMobileAppleEl = null;
 // Last-written values — skip DOM write when nothing changed
 let _uiLast = { apples: -1, wood: -1, stone: -1, gold: -1, score: -1 };
 let _lastScoreSync = null, _lastWoodSync = null, _lastStoneSync = null, _lastGoldSync = null, _lastAppleSync = null;
@@ -7874,6 +7887,8 @@ function updateUI() {
     _uiStoneEl = document.getElementById('stone-count');
     _uiGoldEl  = document.getElementById('gold-count');
     _uiScoreEl = document.getElementById('score-count');
+    _uiFoodBadgeEl = document.getElementById('food-count-badge');
+    _uiMobileAppleEl = document.getElementById('mobile-apple-count');
   }
   const curA = String(player.apples ?? 0);
   const curW = String(player.wood ?? 0);
@@ -7886,10 +7901,8 @@ function updateUI() {
   if (_uiStoneEl && _uiStoneEl.textContent !== curS) _uiStoneEl.textContent = curS;
   if (_uiGoldEl  && _uiGoldEl.textContent  !== curG) _uiGoldEl.textContent  = curG;
   
-  const foodBadge = document.getElementById('food-count-badge');
-  if (foodBadge && foodBadge.textContent !== curA) foodBadge.textContent = curA;
-  const mobAppleCount = document.getElementById('mobile-apple-count');
-  if (mobAppleCount && mobAppleCount.textContent !== curA) mobAppleCount.textContent = curA;
+  if (_uiFoodBadgeEl && _uiFoodBadgeEl.textContent !== curA) _uiFoodBadgeEl.textContent = curA;
+  if (_uiMobileAppleEl && _uiMobileAppleEl.textContent !== curA) _uiMobileAppleEl.textContent = curA;
   if (_uiScoreEl && curSc !== _uiLast.score) {
     _uiScoreEl.textContent = formatScore(curSc);
     _uiLast.score = curSc;
@@ -7912,7 +7925,7 @@ function updateUI() {
     }
   }
   for (let _bType = 3; _bType <= 9; _bType++) {
-    const _badgeEl = _bldBadgeEls[_bType] || document.getElementById('bld-cnt-' + _bType);
+    const _badgeEl = _bldBadgeEls[_bType];
     if (_badgeEl) {
       const _lim = BUILD_LIMITS[_bType] || 25;
       const _cnt = getPlayerBuildingCount(_bType);
@@ -7977,8 +7990,9 @@ function triggerDmgFlash() {
   if (_now - _dmgFlashLastMs < 250) return;
   _dmgFlashLastMs = _now;
   _dmgFlashEl.classList.remove('active');
-  void _dmgFlashEl.offsetWidth; // trigger reflow to restart css animation cleanly
-  _dmgFlashEl.classList.add('active');
+  requestAnimationFrame(() => {
+    if (_dmgFlashEl) _dmgFlashEl.classList.add('active');
+  });
 }
 // ── Upgrade notification system ──────────────────────────────
 let _pendingUpgrades = [], _upgPanelOpen = false;
@@ -14189,7 +14203,7 @@ function applyWASD() {
 }
 
 window.addEventListener('mousemove', e => {
-  const rect = canvas.getBoundingClientRect();
+  const rect = _canvasRect || (_canvasRect = canvas.getBoundingClientRect());
   const sx = e.clientX - rect.left;
   const sy = e.clientY - rect.top;
   const mx = (sx - canvas.width / 2) / ZOOM + canvas.width / 2 + camX;
@@ -14206,7 +14220,7 @@ function _isOwnBuilding(b) {
 }
 
 function _screenToWorld(clientX, clientY) {
-  const rect = canvas.getBoundingClientRect();
+  const rect = _canvasRect || (_canvasRect = canvas.getBoundingClientRect());
   const sx = ((clientX - rect.left) / rect.width) * canvas.width;
   const sy = ((clientY - rect.top) / rect.height) * canvas.height;
   return {
