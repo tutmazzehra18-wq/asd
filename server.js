@@ -770,12 +770,20 @@ function serveStatic(request, response, requestPath) {
     }
     const extension = path.extname(filePath).toLowerCase();
     const isHtmlOrCode = ['.html', '.js', '.css'].includes(extension);
+    let etag = `"${data.length.toString(16)}-${Math.round(fs.statSync(filePath).mtimeMs).toString(16)}"`;
+    if (request.headers['if-none-match'] === etag) {
+      response.writeHead(304, { 'ETag': etag, 'Cache-Control': isHtmlOrCode ? 'no-cache' : 'public, max-age=86400' });
+      response.end();
+      return;
+    }
     response.writeHead(200, {
       'Content-Type': mime[extension] || 'application/octet-stream',
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'SAMEORIGIN',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Cross-Origin-Resource-Policy': 'same-origin',
+      'ETag': etag,
+      'Last-Modified': fs.statSync(filePath).mtime.toUTCString(),
       'Cache-Control': isHtmlOrCode ? 'no-cache' : 'public, max-age=86400',
     });
     response.end(data);
@@ -845,6 +853,7 @@ function compactMobTick(mob) {
     typeName: mob.typeName || '🐺 Kurt',
     state: mob.state || 'idle',
     hitFlash: mob.hitFlash || 0,
+    serverTime: Date.now(),
   };
 }
 
@@ -949,6 +958,7 @@ function publicMob(mob) {
     color: mob.color, outline: mob.outline, shape: mob.shape, eyes: mob.eyes,
     typeName: mob.typeName, dmg: mob.dmg, xpReward: mob.xpReward, goldReward: mob.goldReward,
     state: mob.state || 'idle',
+    serverTime: Date.now(),
     isBoss: false,
   };
 }
@@ -1745,8 +1755,12 @@ io.on('connection', (socket) => {
 
   socket.on('mob_trap_hit', (data = {}) => {
     const mob = mobs.get(String(data.mobId || ''));
-    if (!mob || mob.hp <= 0) return;
+    const player = players.get(socket.id);
+    if (!mob || mob.hp <= 0 || !player || player.hp <= 0) return;
     const b = buildings.get(String(data.buildingId || ''));
+    if (!b || b.type !== 6 || (b.hp ?? 100) <= 0 || b.ownerId !== socket.id) return;
+    if (Math.hypot((player.x || 0) - mob.x, (player.y || 0) - mob.y) > 180) return;
+    if (Math.hypot(b.x - mob.x, b.y - mob.y) > (mob.radius || 46) + 52) return;
     if (b && (b.hp ?? 100) > 0) {
       mob.trappedBy = data.buildingId;
       mob.trappedUntil = Date.now() + 4000;
@@ -1872,9 +1886,24 @@ io.on('connection', (socket) => {
   }
 
   const SERVER_BUILD_LIMITS = { 3: 25, 4: 7, 5: 12, 6: 8, 7: 4, 8: 35, 9: 12, 10: 4 };
+  const SERVER_BUILD_RADII = { 3: 42, 4: 58, 5: 50, 6: 58, 7: 45, 8: 36, 9: 64, 10: 32 };
+  function validBuildPosition(owner, data, type) {
+    const x = Number(data.x), y = Number(data.y);
+    if (!owner || !Number.isFinite(x) || !Number.isFinite(y)) return false;
+    if (Math.abs(x) > 3650 || Math.abs(y) > 3650) return false;
+    if (Math.hypot(x - (Number(owner.x) || 0), y - (Number(owner.y) || 0)) > 280) return false;
+    const radius = SERVER_BUILD_RADII[type] || 36;
+    for (const other of buildings.values()) {
+      if (other.hp <= 0 || other.ownerId !== owner.id) continue;
+      if (Math.hypot(x - other.x, y - other.y) < radius + (SERVER_BUILD_RADII[Number(other.type)] || 36) - 8) return false;
+    }
+    return true;
+  }
 
   socket.on('place_building', (data = {}) => {
     const bType = Number(data.type) || 3;
+    const owner = players.get(socket.id);
+    if (!SERVER_BUILD_RADII[bType] || !validBuildPosition(owner, data, bType)) return;
     const limit = SERVER_BUILD_LIMITS[bType] || 25;
     let ownedCount = 0;
     for (const b of buildings.values()) {
@@ -1888,8 +1917,7 @@ io.on('connection', (socket) => {
     }
 
     const id = data.id || `${socket.id}-${Date.now()}`;
-    const owner = players.get(socket.id);
-    const building = { ...data, ownerId: socket.id, ownerClanId: owner?.clanId || '' };
+    const building = { ...data, x: Number(data.x), y: Number(data.y), type: bType, ownerId: socket.id, ownerClanId: owner?.clanId || '' };
     if (bType === 6) {
       building.maxHp = Math.max(1800, Number(data.maxHp) || 0);
       building.hp = Math.min(building.maxHp, Math.max(building.maxHp * 0.9, Number(data.hp) || 0));
@@ -1901,6 +1929,8 @@ io.on('connection', (socket) => {
   socket.on('build', (data = {}) => {
     if (data.id) {
       const bType = Number(data.building?.type) || 3;
+      const owner = players.get(socket.id);
+      if (!SERVER_BUILD_RADII[bType] || !validBuildPosition(owner, data.building || {}, bType)) return;
       const limit = SERVER_BUILD_LIMITS[bType] || 25;
       let ownedCount = 0;
       for (const b of buildings.values()) {
@@ -1912,7 +1942,7 @@ io.on('connection', (socket) => {
         socket.emit('build_limit_reached', { type: bType, count: ownedCount, limit, clientId: data.id });
         return;
       }
-      const building = { ...data.building, ownerId: socket.id, ownerClanId: players.get(socket.id)?.clanId || '' };
+      const building = { ...data.building, x: Number(data.building.x), y: Number(data.building.y), type: bType, ownerId: socket.id, ownerClanId: owner?.clanId || '' };
       if (bType === 6) {
         building.maxHp = Math.max(1800, Number(data.building?.maxHp) || 0);
         building.hp = Math.min(building.maxHp, Math.max(building.maxHp * 0.9, Number(data.building?.hp) || 0));
@@ -1922,6 +1952,8 @@ io.on('connection', (socket) => {
     }
   });
   socket.on('build_destroy', ({ id } = {}) => {
+    const building = buildings.get(id);
+    if (!building || building.ownerId !== socket.id) return;
     buildings.delete(id);
     io.emit('build_destroy', { id });
     io.emit('trap_freed', { buildingId: id });
@@ -1931,7 +1963,9 @@ io.on('connection', (socket) => {
   });
   socket.on('building_hit', ({ id, dmg } = {}) => {
     const building = buildings.get(id);
-    if (!building) return;
+    const attacker = players.get(socket.id);
+    if (!building || !attacker || attacker.hp <= 0 || building.ownerId === socket.id) return;
+    if (Math.hypot((attacker.x || 0) - building.x, (attacker.y || 0) - building.y) > 190) return;
     const maxDamage = Number(building.type) === 6 ? 32 : 120;
     building.hp = Math.max(0, (building.hp ?? building.maxHp ?? 100) - Math.max(1, Math.min(maxDamage, Number(dmg) || 1)));
     io.emit('build_hp_update', { id, hp: building.hp });
