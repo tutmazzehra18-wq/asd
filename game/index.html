@@ -2637,7 +2637,7 @@
            12. GERÇEK OYUN İÇİ CANLI ORMAN SİMÜLASYONU (TAMING.IO ARKA PLAN)
         ════════════════════════════════════════════════════════════════ */
         const _IMG_CACHE = {};
-        function getLoadedImage(src) {
+        function getBackgroundImage(src) {
             if (!_IMG_CACHE[src]) {
                 const img = new Image();
                 img.src = src;
@@ -2950,8 +2950,8 @@
                 bgCtx.restore();
 
                 // 4. Çalılar & Kırmızı Elmalar (asset/bush.png, asset/apple.png)
-                const bushImg = getLoadedImage('asset/bush.png');
-                const appleImg = getLoadedImage('asset/apple.png');
+                const bushImg = getBackgroundImage('asset/bush.png');
+                const appleImg = getBackgroundImage('asset/apple.png');
                 SIM_BUSHES.forEach(b => {
                     bgCtx.save();
                     bgCtx.translate(b.x, b.y);
@@ -2972,8 +2972,8 @@
                 });
 
                 // 5. Kayalar & Altın Madenleri (asset/rock-forest.png, asset/gold.png)
-                const rockImg = getLoadedImage('asset/rock-forest.png');
-                const goldImg = getLoadedImage('asset/gold.png');
+                const rockImg = getBackgroundImage('asset/rock-forest.png');
+                const goldImg = getBackgroundImage('asset/gold.png');
                 SIM_ROCKS.forEach(r => {
                     bgCtx.save();
                     bgCtx.translate(r.x, r.y);
@@ -3153,7 +3153,7 @@
                 }
 
                 // 10. Ağaçlar (asset/tree-forest.png - Sallanma ve Zemin Gölgesi ile)
-                const treeImg = getLoadedImage('asset/tree-forest.png');
+                const treeImg = getBackgroundImage('asset/tree-forest.png');
                 SIM_TREES.forEach((t, ti) => {
                     bgCtx.save();
                     let sx = 0, sy = 0;
