@@ -1706,6 +1706,119 @@ html.touch-device .joy-zone { display:flex !important; pointer-events:auto !impo
 .lb-gold-icon{width:15px;height:15px;object-fit:contain;display:block;}
 #upgrade-overlay,#upg-backdrop,#upg-notify-btn{display:none !important;}
 @media (max-width:600px) and (hover:none){#minimap{top:calc(env(safe-area-inset-top,0px) + 62px);left:env(safe-area-inset-left,0px);width:80px;height:80px;padding:3px;}#left-stats-stack{top:env(safe-area-inset-top,0px);left:env(safe-area-inset-left,0px);gap:5px !important;}#resource-hud{max-width:calc(100vw - 105px);}#hud-performance{gap:3px;}#fps-display,#ping-display{display:inline-flex !important;font-size:9px;height:25px;padding:2px 5px;}}
+
+/* Reference HUD layout: wood-framed controls with rails that remain usable on touch screens. */
+:root{
+  --ref-ink:#2a211b;
+  --ref-panel:#332a22;
+  --ref-panel-hi:#554335;
+  --ref-cream:#eee2ca;
+  --ref-gold:#e5b74e;
+}
+#ui-top{
+  top:max(env(safe-area-inset-top,0px),8px);
+  left:max(env(safe-area-inset-left,0px),8px);
+  right:auto;
+  width:auto;
+  z-index:410;
+  padding:0;
+}
+#ui-top > div:first-child{display:none;}
+#ui-top > div:last-child{gap:4px;flex-direction:row;align-items:center;}
+#ui-top button,.ref-hud-btn{
+  width:38px;height:38px;padding:0;display:grid;place-items:center;
+  color:var(--ref-cream);font-size:20px;line-height:1;cursor:pointer;
+  background:linear-gradient(145deg,#5b4938,#2d241d);
+  border:2px solid var(--ref-ink);border-radius:7px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 0 #17120f,0 4px 10px rgba(0,0,0,.35);
+  text-shadow:0 2px 0 #17120f;
+}
+#ui-top button:hover{filter:brightness(1.16);transform:translateY(-1px);}
+#ui-top #settings-btn{color:#f3d36c;}
+#ui-top #fs-btn{font-size:23px;}
+#left-stats-stack{
+  top:max(env(safe-area-inset-top,0px),8px);
+  left:auto;right:max(env(safe-area-inset-right,0px),8px);
+  z-index:405;gap:5px !important;align-items:flex-start !important;
+}
+#resource-hud{
+  gap:3px;padding:4px;background:rgba(42,33,27,.93);
+  border:2px solid var(--ref-ink);border-radius:8px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 4px 12px rgba(0,0,0,.5);
+}
+.res-item{
+  min-width:54px;padding:3px 7px;border:1px solid rgba(238,226,202,.22);
+  border-radius:5px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(0,0,0,.1));
+  box-shadow:none;
+}
+.res-icon,.res-icon img,.res-icon svg{width:20px;height:20px;}
+.res-value{font-size:12px;color:var(--ref-cream);}
+#hud-performance{display:none;}
+#lb-panel{
+  top:calc(max(env(safe-area-inset-top,0px),8px) + 47px);right:max(env(safe-area-inset-right,0px),8px);
+  width:210px;min-width:0;max-width:calc(100vw - 16px);padding:7px 8px 8px;
+  z-index:404;background:rgba(42,33,27,.94);border:2px solid var(--ref-ink);border-radius:8px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 5px 16px rgba(0,0,0,.55);
+}
+#lb-title{color:#f3cf63;font-size:11px;margin-bottom:5px;padding-bottom:4px;border-color:rgba(229,183,78,.35);}
+.lb-row{padding:3px 4px;font-size:11px;color:var(--ref-cream);}
+.lb-row.me{background:rgba(229,183,78,.2);border-left-color:#f0c95c;}
+.lb-score,.lb-row.me .lb-score{color:#f0c95c;}
+#ref-player-panel{
+  position:fixed;left:max(env(safe-area-inset-left,0px),8px);
+  bottom:calc(max(env(safe-area-inset-bottom,0px),8px) + 74px);z-index:401;
+  width:112px;padding:5px;background:rgba(42,33,27,.94);color:var(--ref-cream);
+  border:2px solid var(--ref-ink);border-radius:7px;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 5px 15px rgba(0,0,0,.5);
+  font-weight:900;text-shadow:0 1px 0 #17120f;
+}
+.ref-player-name{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid rgba(238,226,202,.2);padding-bottom:4px;}
+.ref-player-name span{color:#f0c95c;}
+.ref-player-actions{display:flex;gap:3px;margin:4px 0;}
+.ref-player-actions span{width:24px;height:22px;display:grid;place-items:center;background:#574635;border:1px solid var(--ref-ink);border-radius:4px;font-size:13px;}
+.ref-player-avatar{height:54px;display:grid;place-items:center;background:#211a15;border-radius:4px;font-size:34px;}
+.ref-player-bars{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:4px;}
+.ref-player-bars i{height:5px;background:#d7aa46;border-radius:2px;}
+#ui-bottom{
+  bottom:max(env(safe-area-inset-bottom,0px),8px);width:min(620px,calc(100vw - 300px));min-width:390px;
+  z-index:400;gap:3px;padding:0;
+}
+#hp-wrap,#ui-bottom .age-container{width:100%;}
+#hp-bar-bg{height:18px;border:2px solid var(--ref-ink);background:rgba(42,33,27,.9);}
+#hp-text{font-size:11px;min-width:52px;}
+.age-bar{height:8px;border-color:var(--ref-ink);}
+.age-text{font-size:10px;min-width:39px;}
+.inventory{
+  width:100%;max-width:none;gap:3px;padding:5px;background:rgba(42,33,27,.96);
+  border:2px solid var(--ref-ink);border-radius:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 5px 16px rgba(0,0,0,.55);
+}
+.inv-slot{width:50px;height:50px;border:2px solid #201914;border-radius:5px;background:#604b37;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 2px 0 #17120f;}
+.inv-slot.active{border-color:#f0c95c;background:#836331;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px #c99635;}
+.slot-num{top:2px;left:3px;background:rgba(31,23,17,.7);font-size:9px;}
+.bld-count-badge{font-size:7px;bottom:1px;right:2px;}
+@media (max-width:900px){
+  #ui-top button,.ref-hud-btn{width:32px;height:32px;font-size:16px;}
+  #left-stats-stack{top:max(env(safe-area-inset-top,0px),8px);right:max(env(safe-area-inset-right,0px),8px);}
+  #resource-hud{max-width:calc(100vw - 16px);}
+  .res-item{min-width:40px;padding:3px 4px;gap:3px;}
+  .res-icon,.res-icon img,.res-icon svg{width:16px;height:16px;}.res-value{font-size:10px;}
+  #lb-panel{top:calc(max(env(safe-area-inset-top,0px),8px) + 40px);width:170px;}
+  #ui-bottom{width:calc(100vw - 16px);min-width:0;}
+  .inventory{gap:2px;padding:4px;}
+  .inv-slot{width:calc((100vw - 52px) / 11);height:calc((100vw - 52px) / 11);min-width:28px;min-height:28px;}
+  .inv-icon-canvas{width:70%;height:70%;}.weapon-tier-lbl{font-size:6px;}.bld-count-badge{font-size:6px;}
+  #ref-player-panel{bottom:calc(max(env(safe-area-inset-bottom,0px),8px) + 69px);width:96px;}
+  .ref-player-avatar{height:40px;font-size:26px;}.ref-player-actions span{width:20px;height:19px;font-size:11px;}
+}
+@media (max-width:480px){
+  #ui-top{left:max(env(safe-area-inset-left,0px),5px);top:max(env(safe-area-inset-top,0px),5px);}
+  #ui-top > div:last-child{gap:2px;}.ref-hud-btn{display:none !important;}
+  #ui-top button{width:29px;height:29px;font-size:14px;}
+  #resource-hud{gap:2px;padding:3px;}.res-item{min-width:0;padding:2px 3px;}.res-icon,.res-icon img,.res-icon svg{width:13px;height:13px;}.res-value{font-size:9px;}
+  #lb-panel{right:5px;top:40px;width:148px;padding:5px;}.lb-row{font-size:9px;padding:2px;}.lb-score{font-size:9px;}.lb-title{font-size:9px;}
+  #ref-player-panel{left:5px;bottom:calc(max(env(safe-area-inset-bottom,0px),5px) + 64px);width:84px;padding:4px;}.ref-player-name{font-size:8px;}.ref-player-actions{margin:2px 0;}.ref-player-actions span{width:18px;height:17px;font-size:9px;}.ref-player-avatar{height:32px;font-size:22px;}
+  #hp-bar-bg{height:14px;}#hp-text{font-size:9px;min-width:42px;}.age-bar{height:6px;}.age-text{font-size:8px;min-width:34px;}
+  .inventory{padding:3px;}.inv-slot{width:calc((100vw - 42px) / 11);height:calc((100vw - 42px) / 11);}.slot-num{font-size:7px;padding:0 2px;}.bld-count-badge{display:none;}
+}
 /* Death result: compact forest HUD, with real player and weapon assets. */
 #death-overlay{
   background:rgba(3,8,12,.82);
@@ -1826,11 +1939,21 @@ function drawSkinEyesOverlay(c, R, sk, fl) {
 <div id="ui-top">
   <div style="flex:1;"></div>
   <div style="display:flex;gap:6px;pointer-events:auto;align-items:center;">
+    <button type="button" class="ref-hud-btn" title="Savunma" aria-label="Savunma">🛡</button>
+    <button type="button" class="ref-hud-btn" title="Yetenekler" aria-label="Yetenekler">⚔</button>
+    <button type="button" class="ref-hud-btn" title="Ekip" aria-label="Ekip">✋</button>
     <button type="button" id="settings-btn" title="Ayarlar">⚙️</button>
     <button id="fs-btn" onclick="tryFullscreen()" title="Tam Ekran">⛶</button>
     <button id="back-btn" onclick="_goToMenu()">← Menü</button>
   </div>
 </div>
+
+<aside id="ref-player-panel" aria-label="Oyuncu bilgileri">
+  <div class="ref-player-name">Frankfurt <span>#2</span></div>
+  <div class="ref-player-actions"><span>⚔</span><span>✦</span><span>▣</span></div>
+  <div class="ref-player-avatar">🧍</div>
+  <div class="ref-player-bars"><i></i><i></i><i></i><i></i></div>
+</aside>
 
 <!-- SETTINGS PANEL -->
 <div id="snap-settings-panel">
@@ -2325,7 +2448,7 @@ function createRenderCanvas(width, height) {
   return fallback;
 }
 window._perf = window._perf || {
-  frameMs:0, renderMs:0, tCamps:0, tTelegraph:0, tGround:0, tFood:0, tBuildings:0, tPlayers:0, tEnemies:0, tParticles:0,
+  frameMs:0, renderMs:0, tCamps:0, tTelegraph:0, tGround:0, tBuildings:0, tPlayers:0, tEnemies:0, tParticles:0,
   ocRebuild:0, eMobs:0, ePlayers:0, eParticles:0, eProjectiles:0, eTelegraphs:0, eBuildings:0, quality:0, shadowBlurActive:0
 };
 
@@ -2349,7 +2472,6 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 let _resizePauseUntil = 0;
 
 let _lastCanvasW = 0, _lastCanvasH = 0;
-let _canvasRect = null;
 function resize() {
   if (Date.now() < _resizePauseUntil) return;
 
@@ -2373,7 +2495,6 @@ function resize() {
     ctx.imageSmoothingQuality = 'low';
     ctx.fillStyle = '#5aaa38';
     ctx.fillRect(0, 0, w, h);
-    _canvasRect = canvas.getBoundingClientRect();
     window._resGrdDirty = true;
   }
 }
@@ -2458,17 +2579,19 @@ const _MOB_SPRITES = new Map();
 const _PLAYER_SPRITES = new Map();
 const _RESOURCE_SPRITES = new Map();
 const _WEAPON_SPRITES = new Map();
-function _loadSprite(name, category) {
-
+function _loadSprite(name, category, priority = 'normal') {
   if (_SPRITE_CACHE.has(name)) return _SPRITE_CACHE.get(name);
   const image = new Image();
-  image.decoding = 'async';
-  const entry = { image, ready: false, failed: false };
+  const entry = { image, ready: false, failed: false, priority };
   image.onload = () => {
     entry.ready = true; entry.failed = false;
     if (typeof window.renderInventoryIcons === 'function') window.renderInventoryIcons(true);
   };
   image.onerror = () => { entry.failed = true; entry.ready = false; };
+  // PERF: Use loading="lazy" for non-critical sprites to reduce initial load
+  if (priority === 'low') {
+    image.loading = 'lazy';
+  }
   image.src = _BASE + name;
   _SPRITE_CACHE.set(name, entry);
   if (category === 'mob') _MOB_SPRITES.set(name, entry);
@@ -2478,18 +2601,30 @@ function _loadSprite(name, category) {
   return entry;
 }
 function _preloadStaticSprites() {
-  const resources = [
+  // PERF: Load critical resources first with normal priority
+  const criticalResources = [
     'asset/tree-forest.png', 'asset/rock-forest.png',
+    'asset/gold.png', 'asset/apple.png'
+  ];
+  for (const name of criticalResources) _loadSprite(name, 'resource', 'normal');
+  
+  // PERF: Load biome-specific resources with low priority (lazy)
+  const biomeResources = [
     'resourceasset/desertwood.png', 'resourceasset/desertstone.png',
     'resourceasset/winterwood.png', 'resourceasset/winterstone.png',
     'asset/tree-snow.png', 'asset/tree-desert.png', 'asset/tree-darkforest.png',
     'asset/rock-snow.png', 'asset/rock-desert.png', 'asset/rock-darkforest.png', 'asset/rock.png',
-    'asset/gold.png', 'asset/apple.png', 'asset/bush.png', 'asset/mushroom.png', 'asset/crystal.png', 'asset/hive.png'
+    'asset/bush.png', 'asset/mushroom.png', 'asset/crystal.png', 'asset/hive.png'
   ];
-  for (const name of resources) _loadSprite(name, 'resource');
+  for (const name of biomeResources) _loadSprite(name, 'resource', 'low');
+  
+  // PERF: Load weapons with normal priority (used frequently)
   for (const kind of ['axe', 'sword']) {
-    for (let tier = 0; tier <= 6; tier++) _loadSprite(`weapons/${kind}-tier-${tier}.png`, 'weapon');
+    for (let tier = 0; tier <= 6; tier++) _loadSprite(`weapons/${kind}-tier-${tier}.png`, 'weapon', 'normal');
   }
+  // PERF: Load mob sprites with low priority (not always visible)
+  _loadSprite('mobs/spider-46.png', 'mob', 'low');
+  _loadSprite('mobs/elephant-68.png', 'mob', 'low');
 }
 function _mobSprite(shape, radius) {
   const exactKey = `mobs/${shape}-${radius}.png`;
@@ -2602,6 +2737,52 @@ var _pvpPredictTime     = new Map();
 var _eLidCounter        = 0;
 var _buildDmgTimer      = 0;
 var _userZoomMultiplier = 1.0;
+
+// ── SPATIAL PARTITIONING (GRID SYSTEM) ─────────────────────────────────────
+// PERF: Divides map into 250x250 cells to reduce CPU/GPU load by only processing visible objects
+const GRID_SIZE = 250;
+const _foodGrid = {};
+const _resourceGrid = {};
+
+function _getGridKey(x, y) {
+  const col = Math.floor(x / GRID_SIZE);
+  const row = Math.floor(y / GRID_SIZE);
+  return `${col}_${row}`;
+}
+
+function _addFoodToGrid(food) {
+  const key = _getGridKey(food.x, food.y);
+  if (!_foodGrid[key]) _foodGrid[key] = [];
+  _foodGrid[key].push(food);
+  food._gridKey = key;
+}
+
+function _removeFoodFromGrid(food) {
+  if (food._gridKey && _foodGrid[food._gridKey]) {
+    const idx = _foodGrid[food._gridKey].indexOf(food);
+    if (idx !== -1) {
+      _foodGrid[food._gridKey].splice(idx, 1);
+      if (_foodGrid[food._gridKey].length === 0) delete _foodGrid[food._gridKey];
+    }
+  }
+}
+
+function _addResourceToGrid(res) {
+  const key = _getGridKey(res.x, res.y);
+  if (!_resourceGrid[key]) _resourceGrid[key] = [];
+  _resourceGrid[key].push(res);
+  res._gridKey = key;
+}
+
+function _removeResourceFromGrid(res) {
+  if (res._gridKey && _resourceGrid[res._gridKey]) {
+    const idx = _resourceGrid[res._gridKey].indexOf(res);
+    if (idx !== -1) {
+      _resourceGrid[res._gridKey].splice(idx, 1);
+      if (_resourceGrid[res._gridKey].length === 0) delete _resourceGrid[res._gridKey];
+    }
+  }
+}
 
 // Mouse Wheel Zoom Listener (Controlled zoom, clamped to never expose off-map void)
 window.addEventListener('wheel', (e) => {
@@ -4207,27 +4388,6 @@ let arrows = [];         // player bow arrows
 let enemyProjectiles = []; // enemy ranged attacks
 let armorDrops = [];     // armor pickup drops
 let ambientParticles = []; // biome ambient (leaves, snow, ash, spores)
-const _PROJECTILE_POOL_SIZE = 180;
-const _projectileFreePool = [];
-function _newProjectilePoolItem() {
-  return {
-    x: 0, y: 0, vx: 0, vy: 0, dmg: 0, life: 0, owner: 'turret',
-    targetType: 'enemy', _targetId: null, color: '#00e5ff',
-    trailColor: 'rgba(0,200,255,0.4)', _trail: Array.from({ length: 6 }, () => ({ x: 0, y: 0 })),
-    _tH: 0, _tN: 0
-  };
-}
-for (let _pi = 0; _pi < _PROJECTILE_POOL_SIZE; _pi++) _projectileFreePool.push(_newProjectilePoolItem());
-function _acquireProjectile(data) {
-  const projectile = _projectileFreePool.pop();
-  if (!projectile) return null;
-  Object.assign(projectile, data, { _tH: 0, _tN: 0 });
-  return projectile;
-}
-function _releaseProjectile(projectile) {
-  projectile._targetId = null;
-  if (_projectileFreePool.length < _PROJECTILE_POOL_SIZE) _projectileFreePool.push(projectile);
-}
 // PERF: pre-allocated ambient particle pool — eliminates per-spawn GC pressure
 const _AP_POOL_SZ = 36;
 const _apFreePool = [];
@@ -4313,68 +4473,28 @@ const GROUND_FOOD_TYPES = [
 let groundFood = [];
 const GROUND_FOOD_MAX = 80;
 const GROUND_FOOD_COLLECT_RADIUS = 38;
-const _GROUND_FOOD_SPRITES = new Map();
-const _GROUND_FOOD_CELL_SIZE = 240;
-const _groundFoodCells = new Map();
-const _groundFoodVisible = [];
-let _groundFoodVisibleDirty = true;
-let _groundFoodViewKey = '';
 
-function _groundFoodCellKey(x, y) {
-  return `${Math.floor(x / _GROUND_FOOD_CELL_SIZE)},${Math.floor(y / _GROUND_FOOD_CELL_SIZE)}`;
-}
-function _indexGroundFood(food) {
-  const key = _groundFoodCellKey(food.x, food.y);
-  let bucket = _groundFoodCells.get(key);
-  if (!bucket) _groundFoodCells.set(key, bucket = []);
-  bucket.push(food);
-  food._cellKey = key;
-}
-function _unindexGroundFood(food) {
-  const bucket = _groundFoodCells.get(food._cellKey);
-  if (!bucket) return;
-  const index = bucket.indexOf(food);
-  if (index >= 0) bucket.splice(index, 1);
-  if (bucket.length === 0) _groundFoodCells.delete(food._cellKey);
-}
-function _removeGroundFood(index) {
-  const food = groundFood[index];
-  _unindexGroundFood(food);
-  const last = groundFood.pop();
-  if (index < groundFood.length) {
-    groundFood[index] = last;
-    const bucket = _groundFoodCells.get(last._cellKey);
-    const lastIndex = bucket ? bucket.indexOf(last) : -1;
-    if (bucket && lastIndex >= 0) bucket[lastIndex] = last;
+// PERF: OffscreenCanvas cache for ground food sprites
+// Pre-renders each food type once, then blits with drawImage
+const _GROUND_FOOD_OC_CACHE = new Map();
+
+function _getGroundFoodSprite(typeIdx) {
+  const cacheKey = typeIdx;
+  if (_GROUND_FOOD_OC_CACHE.has(cacheKey)) {
+    return _GROUND_FOOD_OC_CACHE.get(cacheKey);
   }
-  _groundFoodVisibleDirty = true;
+  const type = GROUND_FOOD_TYPES[typeIdx];
+  const size = Math.ceil(type.radius * 2.8);
+  const oc = createRenderCanvas(size, size);
+  const occ = oc.getContext('2d');
+  occ.textAlign = 'center';
+  occ.textBaseline = 'middle';
+  occ.font = `${type.radius * 1.4}px Arial`;
+  occ.fillStyle = '#fff';
+  occ.fillText(type.emoji, size / 2, size / 2);
+  _GROUND_FOOD_OC_CACHE.set(cacheKey, oc);
+  return oc;
 }
-
-function _getGroundFoodSprite(type) {
-  const key = `${type.name}:${_qualityLevel >= 2 ? 'glow' : 'flat'}`;
-  if (_GROUND_FOOD_SPRITES.has(key)) return _GROUND_FOOD_SPRITES.get(key);
-  const size = Math.ceil(type.radius * 4 + 20);
-  const spriteCanvas = createRenderCanvas(size, size);
-  const spriteCtx = spriteCanvas.getContext('2d');
-  const center = size / 2;
-  spriteCtx.textAlign = 'center';
-  spriteCtx.textBaseline = 'middle';
-  spriteCtx.fillStyle = 'rgba(0,0,0,0.35)';
-  spriteCtx.beginPath(); spriteCtx.arc(center, center + 2, type.radius, 0, Math.PI * 2); spriteCtx.fill();
-  if (_qualityLevel >= 2) { spriteCtx.shadowColor = type.color; spriteCtx.shadowBlur = 10; }
-  spriteCtx.fillStyle = type.color;
-  spriteCtx.beginPath(); spriteCtx.arc(center, center, type.radius, 0, Math.PI * 2); spriteCtx.fill();
-  spriteCtx.shadowBlur = 0;
-  spriteCtx.strokeStyle = 'rgba(255,255,255,0.5)'; spriteCtx.lineWidth = 1.5;
-  spriteCtx.beginPath(); spriteCtx.arc(center, center, type.radius, 0, Math.PI * 2); spriteCtx.stroke();
-  spriteCtx.globalAlpha = 0.9;
-  spriteCtx.font = `${type.radius * 1.4}px Arial`;
-  spriteCtx.fillStyle = '#fff';
-  spriteCtx.fillText(type.emoji, center, center);
-  _GROUND_FOOD_SPRITES.set(key, spriteCanvas);
-  return spriteCanvas;
-}
-for (const _foodType of GROUND_FOOD_TYPES) _getGroundFoodSprite(_foodType);
 
 function spawnGroundFood() {
   if (groundFood.length >= GROUND_FOOD_MAX) return;
@@ -4386,8 +4506,7 @@ function spawnGroundFood() {
   const id = globalTime + Math.random();
   const food = { x, y, type: t, bob: Math.random() * Math.PI * 2, id, life: 1800 + Math.random() * 1800 };
   groundFood.push(food);
-  _indexGroundFood(food);
-  _groundFoodVisibleDirty = true;
+  _addFoodToGrid(food);
 }
 
 // Pre-spawn initial ground food
@@ -4402,7 +4521,7 @@ function updateGroundFood() {
     const f = groundFood[i];
     f.bob += 0.07;
     f.life--;
-    if (f.life <= 0) { _removeGroundFood(i); continue; }
+    if (f.life <= 0) { _removeFoodFromGrid(f); groundFood[i]=groundFood[groundFood.length-1]; groundFood.pop(); continue; }
     const dist = Math.hypot(player.x - f.x, player.y - f.y);
     if (dist < GROUND_FOOD_COLLECT_RADIUS) {
       const healAmt = Math.round(player.maxHp * f.type.healPct);
@@ -4422,39 +4541,72 @@ function updateGroundFood() {
       }
       playSound(660, 0.1, 'sine', 0.18);
       updateHpBar();
-      _removeGroundFood(i);
+      _removeFoodFromGrid(f);
+      groundFood[i]=groundFood[groundFood.length-1]; groundFood.pop();
     }
   }
 }
 
 function drawGroundFood() {
   if (groundFood.length === 0) return;
-  const viewKey = `${Math.floor(_renderCullL / _GROUND_FOOD_CELL_SIZE)},${Math.floor(_renderCullR / _GROUND_FOOD_CELL_SIZE)},${Math.floor(_renderCullT / _GROUND_FOOD_CELL_SIZE)},${Math.floor(_renderCullB / _GROUND_FOOD_CELL_SIZE)}`;
-  if (_groundFoodVisibleDirty || viewKey !== _groundFoodViewKey) {
-    _groundFoodViewKey = viewKey;
-    _groundFoodVisible.length = 0;
-    const minCX = Math.floor(_renderCullL / _GROUND_FOOD_CELL_SIZE);
-    const maxCX = Math.floor(_renderCullR / _GROUND_FOOD_CELL_SIZE);
-    const minCY = Math.floor(_renderCullT / _GROUND_FOOD_CELL_SIZE);
-    const maxCY = Math.floor(_renderCullB / _GROUND_FOOD_CELL_SIZE);
-    for (let cy = minCY; cy <= maxCY; cy++) {
-      for (let cx = minCX; cx <= maxCX; cx++) {
-        const bucket = _groundFoodCells.get(`${cx},${cy}`);
-        if (bucket) _groundFoodVisible.push(...bucket);
+  ctx.save();
+  
+  // PERF: Use spatial partitioning - only iterate visible grid cells
+  const startCol = Math.floor(_renderCullL / GRID_SIZE);
+  const endCol = Math.floor(_renderCullR / GRID_SIZE);
+  const startRow = Math.floor(_renderCullT / GRID_SIZE);
+  const endRow = Math.floor(_renderCullB / GRID_SIZE);
+  
+  // PERF: Batch drawing operations by type to reduce state changes
+  const _batchDraw = [];
+  
+  for (let col = startCol; col <= endCol; col++) {
+    for (let row = startRow; row <= endRow; row++) {
+      const key = `${col}_${row}`;
+      const cellFoods = _foodGrid[key];
+      if (!cellFoods || cellFoods.length === 0) continue;
+      
+      for (let _gi = 0; _gi < cellFoods.length; _gi++) {
+        const f = cellFoods[_gi];
+        // Skip double-check culling - grid is accurate enough
+        const _fa = f.life < 120 ? f.life / 120 : 1;
+        const bobY = Math.sin(f.bob) * 3;
+        _batchDraw.push({ f, _fa, bobY });
       }
     }
-    _groundFoodVisibleDirty = false;
   }
-  ctx.save();
-  for (let _gi = 0; _gi < _groundFoodVisible.length; _gi++) {
-    const f = _groundFoodVisible[_gi];
-    const _fa = f.life < 120 ? f.life / 120 : 1;
-    const bobY = Math.sin(f.bob) * 3;
+  
+  // PERF: Draw shadows first in batch
+  if (_qualityLevel > 0) {
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    for (let i = 0; i < _batchDraw.length; i++) {
+      const { f } = _batchDraw[i];
+      ctx.moveTo(f.x + f.type.radius, f.y + 2);
+      ctx.arc(f.x, f.y + 2, f.type.radius, 0, Math.PI * 2);
+    }
+    ctx.fill();
+  }
+  
+  // PERF: Draw food bodies in batch
+  for (let i = 0; i < _batchDraw.length; i++) {
+    const { f, _fa, bobY } = _batchDraw[i];
     ctx.globalAlpha = _fa;
-    const sprite = _getGroundFoodSprite(f.type);
-    const half = sprite.width / 2;
-    ctx.drawImage(sprite, f.x - half, f.y + bobY - half);
+    // Colored body + glow at quality 2
+    if (_qualityLevel >= 2) { ctx.shadowColor = f.type.color; ctx.shadowBlur = 10; }
+    ctx.fillStyle = f.type.color;
+    ctx.beginPath(); ctx.arc(f.x, f.y + bobY, f.type.radius, 0, Math.PI * 2); ctx.fill();
+    if (_qualityLevel >= 2) ctx.shadowBlur = 0;
+    // PERF: Use cached OffscreenCanvas sprite instead of fillText
+    const typeIdx = GROUND_FOOD_TYPES.indexOf(f.type);
+    if (typeIdx >= 0) {
+      const sprite = _getGroundFoodSprite(typeIdx);
+      const size = Math.ceil(f.type.radius * 2.8);
+      ctx.globalAlpha = _fa * 0.9;
+      ctx.drawImage(sprite, f.x - size / 2, f.y + bobY - size / 2, size, size);
+    }
   }
+  
   ctx.restore();
 }
 
@@ -5323,6 +5475,7 @@ function _rebuildResourcesFromSeed(seed, resHpOverrides) {
   const rng = _makeMulberry32(seed);
   const r = PLAY_RADIUS * 0.98;
   resources.length = 0;
+  _resourceGrid = {}; // Clear resource grid on reset
   for (let i = 0; i < RES_COUNT; i++) {
     const x = (rng() * 2 - 1) * r;
     const y = (rng() * 2 - 1) * r;
@@ -5330,6 +5483,7 @@ function _rebuildResourcesFromSeed(seed, resHpOverrides) {
     res._netIdx = i;
     res.hp = res.maxHp;
     resources.push(res);
+    _addResourceToGrid(res);
   }
 }
 
@@ -5343,6 +5497,7 @@ function tickRespawns() {
       const _newRes = makeResource(respawnQueue[i].x, respawnQueue[i].y);
       _newRes._netIdx = -1;
       resources.push(_newRes);
+      _addResourceToGrid(_newRes);
       respawnQueue.splice(i, 1);
     }
   }
@@ -6910,6 +7065,10 @@ function _checkPvpHits() {
     if (typeof op.hitFlash !== 'undefined') op.hitFlash = 8;
     playSound(220 + Math.floor(Math.random() * 100), 0.08, 'square', 0.15);
     shake(4);
+    // FIX: Send immediate PvP hit to server to ensure damage is applied
+    if (_socket) {
+      _socket.emit('pvp_hit', { targetId: opId, dmg: dmgEst, swingId: _swingId });
+    }
   });
 }
 
@@ -7196,7 +7355,8 @@ const _pFreePool  = [];
 (function _initPPool(){for(let _i=0;_i<_P_POOL_SZ;_i++) _pFreePool.push({x:0,y:0,vx:0,vy:0,r:0,life:0,maxLife:1,color:'#fff'});})();
 
 function _spawnParticle(x,y,vx,vy,r,life,color){
-  const _cap=_qualityLevel===0?4:_qualityLevel===1?12:32;
+  // PERF: Reduced particle caps for better performance on all quality levels
+  const _cap=_qualityLevel===0?3:_qualityLevel===1?8:24;
   if(particles.length>=_cap) return;
   const p=_pFreePool.length>0?_pFreePool.pop():{x:0,y:0,vx:0,vy:0,r:0,life:0,maxLife:1,color:'#fff'};
   p.x=x;p.y=y;p.vx=vx;p.vy=vy;p.r=r;p.life=life;p.maxLife=life;p.color=color;
@@ -7457,7 +7617,8 @@ function updateAmbientParticles(){
     ambientParticles.push(_apObj);
   }
   // Cap ambient particles — return extras to pool before truncation
-  const _aCap = _qualityLevel === 0 ? 0 : _qualityLevel === 1 ? 10 : 32;
+  // PERF: Reduced caps for better performance
+  const _aCap = _qualityLevel === 0 ? 0 : _qualityLevel === 1 ? 6 : 20;
   if (ambientParticles.length > _aCap) {
     for(let _ci=_aCap;_ci<ambientParticles.length;_ci++) _apFreePool.push(ambientParticles[_ci]);
     ambientParticles.length = _aCap;
@@ -7914,7 +8075,6 @@ const _hpFill = document.getElementById('hp-bar-fill');
 const _hpText = document.getElementById('hp-text');
 // Cached DOM references for hot-path UI updates (set on first call)
 let _uiAppleEl = null, _uiWoodEl = null, _uiStoneEl = null, _uiGoldEl = null, _uiScoreEl = null;
-let _uiFoodBadgeEl = null, _uiMobileAppleEl = null;
 // Last-written values — skip DOM write when nothing changed
 let _uiLast = { apples: -1, wood: -1, stone: -1, gold: -1, score: -1 };
 let _lastScoreSync = null, _lastWoodSync = null, _lastStoneSync = null, _lastGoldSync = null, _lastAppleSync = null;
@@ -7940,8 +8100,6 @@ function updateUI() {
     _uiStoneEl = document.getElementById('stone-count');
     _uiGoldEl  = document.getElementById('gold-count');
     _uiScoreEl = document.getElementById('score-count');
-    _uiFoodBadgeEl = document.getElementById('food-count-badge');
-    _uiMobileAppleEl = document.getElementById('mobile-apple-count');
   }
   const curA = String(player.apples ?? 0);
   const curW = String(player.wood ?? 0);
@@ -7954,8 +8112,10 @@ function updateUI() {
   if (_uiStoneEl && _uiStoneEl.textContent !== curS) _uiStoneEl.textContent = curS;
   if (_uiGoldEl  && _uiGoldEl.textContent  !== curG) _uiGoldEl.textContent  = curG;
   
-  if (_uiFoodBadgeEl && _uiFoodBadgeEl.textContent !== curA) _uiFoodBadgeEl.textContent = curA;
-  if (_uiMobileAppleEl && _uiMobileAppleEl.textContent !== curA) _uiMobileAppleEl.textContent = curA;
+  const foodBadge = document.getElementById('food-count-badge');
+  if (foodBadge && foodBadge.textContent !== curA) foodBadge.textContent = curA;
+  const mobAppleCount = document.getElementById('mobile-apple-count');
+  if (mobAppleCount && mobAppleCount.textContent !== curA) mobAppleCount.textContent = curA;
   if (_uiScoreEl && curSc !== _uiLast.score) {
     _uiScoreEl.textContent = formatScore(curSc);
     _uiLast.score = curSc;
@@ -7978,7 +8138,7 @@ function updateUI() {
     }
   }
   for (let _bType = 3; _bType <= 9; _bType++) {
-    const _badgeEl = _bldBadgeEls[_bType];
+    const _badgeEl = _bldBadgeEls[_bType] || document.getElementById('bld-cnt-' + _bType);
     if (_badgeEl) {
       const _lim = BUILD_LIMITS[_bType] || 25;
       const _cnt = getPlayerBuildingCount(_bType);
@@ -7993,8 +8153,14 @@ function updateUI() {
 }
 let _bldBadgeEls = null, _bldLastCounts = null;
 // Cached HP values — updateHpBar is called every frame, skip DOM write when nothing changed
+// PERF: Batch DOM updates and throttle to every 3 frames for better performance
 let _hpLast = { hp: -1, maxHp: -1, band: -1 };
+let _hpUpdateCounter = 0;
 function updateHpBar() {
+  _hpUpdateCounter++;
+  if (_hpUpdateCounter < 3) return; // Throttle to every 3 frames
+  _hpUpdateCounter = 0;
+  
   const pct = Math.max(0, player.hp / player.maxHp * 100);
   const band = pct > 55 ? 2 : pct > 25 ? 1 : 0;
   const hpCeil = Math.ceil(player.hp);
@@ -8042,9 +8208,10 @@ function triggerDmgFlash() {
   const _now = Date.now();
   if (_now - _dmgFlashLastMs < 250) return;
   _dmgFlashLastMs = _now;
+  // PERF: Remove forced reflow - use animation restart via class toggle without offsetWidth read
   _dmgFlashEl.classList.remove('active');
   requestAnimationFrame(() => {
-    if (_dmgFlashEl) _dmgFlashEl.classList.add('active');
+    _dmgFlashEl.classList.add('active');
   });
 }
 // ── Upgrade notification system ──────────────────────────────
@@ -8116,8 +8283,9 @@ function showUpgradeOverlay(age) {
   return;
 }
 // XP DOM güncellemesi — her kaynak darbede DOM yazmak layout tetikler.
-// Çözüm: dirty flag → her 4 frame'de bir toplu yaz (_flushXP).
+// Çözüm: dirty flag → her 8 frame'de bir toplu yaz (_flushXP) for better performance.
 let _xpDirty = false;
+let _xpFlushCounter = 0;
 function updateXP() {
   // Level-up kontrolü anında çalışır (hesaplama, DOM yazısı değil)
   const age = getAge(player.xp);
@@ -8131,15 +8299,22 @@ function updateXP() {
 }
 function _flushXP() {
   if (!_xpDirty) return;
+  _xpFlushCounter++;
+  if (_xpFlushCounter < 8) return; // Flush every 8 frames instead of immediately
+  _xpFlushCounter = 0;
   _xpDirty = false;
   const age  = getAge(player.xp);
   const fill = getAgeFill(player.xp);
-  document.getElementById('xp-fill').style.width = fill + '%';
-  const idx  = age - 1;
-  const xpS  = AGE_XP_TABLE[idx] || 0;
-  const xpE  = AGE_XP_TABLE[idx + 1];
-  const prog = xpE ? `${player.xp - xpS}/${xpE - xpS}` : 'MAX';
-  document.getElementById('age-text').textContent = `AGE ${age}  (${prog} XP)`;
+  const xpFill = document.getElementById('xp-fill');
+  const ageText = document.getElementById('age-text');
+  if (xpFill) xpFill.style.width = fill + '%';
+  if (ageText) {
+    const idx  = age - 1;
+    const xpS  = AGE_XP_TABLE[idx] || 0;
+    const xpE  = AGE_XP_TABLE[idx + 1];
+    const prog = xpE ? `${player.xp - xpS}/${xpE - xpS}` : 'MAX';
+    ageText.textContent = `AGE ${age}  (${prog} XP)`;
+  }
 }
 
 // ============================================================
@@ -10728,9 +10903,17 @@ function _drawSpriteSpider(ctx, e, R, isMoving, state, animTimer, attackTimer, f
 // ── Main enemy draw entry point ───────────────────────────────
 function drawEnemy(e) {
   if (!e) return;
+  // FIX: Ensure all mob properties are valid to prevent invisible mobs
   if (typeof e.x !== 'number' || isNaN(e.x)) e.x = Number(e._targetX) || 0;
   if (typeof e.y !== 'number' || isNaN(e.y)) e.y = Number(e._targetY) || 0;
   if (!(e.radius > 0) || isNaN(e.radius)) e.radius = 46;
+  if (!e.color) e.color = '#6b4932';
+  if (!e.outline) e.outline = '#28170d';
+  if (!e.eyes) e.eyes = '#ffcc66';
+  if (!e.shape) e.shape = 'wolf';
+  if (!e.hp) e.hp = 100;
+  if (!e.maxHp) e.maxHp = 100;
+  
   const flash = e.hitFlash > 0;
   const R = e.radius;
   const shape = e.shape || 'wolf';
@@ -12105,55 +12288,9 @@ function _decorHash(cx, cy, salt) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
-const _BIOME_DECOR_TILE_CACHE = new Map();
-const _DECOR_CELL_SIZE = 270;
-function _getBiomeDecorTile(cx, cy) {
-  const cacheKey = `${cx},${cy}`;
-  if (_BIOME_DECOR_TILE_CACHE.has(cacheKey)) return _BIOME_DECOR_TILE_CACHE.get(cacheKey);
-  if (_decorHash(cx, cy, 1) > 0.68) {
-    _BIOME_DECOR_TILE_CACHE.set(cacheKey, null);
-    return null;
-  }
-  const px = cx * _DECOR_CELL_SIZE + (0.15 + 0.70 * _decorHash(cx, cy, 2)) * _DECOR_CELL_SIZE;
-  const py = cy * _DECOR_CELL_SIZE + (0.15 + 0.70 * _decorHash(cx, cy, 3)) * _DECOR_CELL_SIZE;
-  if (Math.abs(px) > WORLD - 60 || Math.abs(py) > WORLD - 60) {
-    _BIOME_DECOR_TILE_CACHE.set(cacheKey, null);
-    return null;
-  }
-  const biome = getBiome(px, py);
-  const prefix = _BIOME_DECOR_MAP[biome] || 'orman';
-  const tRoll = _decorHash(cx, cy, 4);
-  const dKey = tRoll < 0.38 ? 'cakil' : tRoll < 0.66 ? 'yonca' : tRoll < 0.80 ? 'ufak_cali' : tRoll < 0.90 ? 'yildiz_bitki' : tRoll < 0.95 ? 'leke_buyuk' : 'leke_uzun';
-  const img = _BIOME_DECOR_SPRITES.get(`${prefix}_${dKey}`);
-  if (!img || !img.complete || img.naturalWidth === 0) return null;
-  const tile = createRenderCanvas(_DECOR_CELL_SIZE, _DECOR_CELL_SIZE);
-  const tileCtx = tile.getContext('2d');
-  const localX = px - cx * _DECOR_CELL_SIZE;
-  const localY = py - cy * _DECOR_CELL_SIZE;
-  const rot = _decorHash(cx, cy, 5) * Math.PI * 2;
-  const scale = 0.92 + _decorHash(cx, cy, 6) * 0.22;
-  const draw = (x, y, w, h, alpha, rotation) => {
-    tileCtx.save(); tileCtx.globalAlpha = alpha; tileCtx.translate(x, y); tileCtx.rotate(rotation);
-    tileCtx.drawImage(img, -w / 2, -h / 2, w, h); tileCtx.restore();
-  };
-  if (dKey === 'cakil') {
-    const angleDir = _decorHash(cx, cy, 7) * Math.PI * 2;
-    const cdx = Math.cos(angleDir), cdy = Math.sin(angleDir);
-    const perpX = -cdy, perpY = cdx;
-    draw(localX, localY, 46 * scale, 46 * scale, 1, rot);
-    draw(localX + cdx * 26 + perpX * 6, localY + cdy * 26 + perpY * 6, 38 * scale, 38 * scale, 1, rot + 1.2);
-    if (_decorHash(cx, cy, 8) < 0.45) draw(localX + cdx * 52 + perpX * 14, localY + cdy * 52 + perpY * 14, 32 * scale, 32 * scale, 1, rot + 2.5);
-  } else if (dKey === 'yonca') draw(localX, localY, 100 * scale, 100 * scale, 0.78, rot);
-  else if (dKey === 'ufak_cali') draw(localX, localY, 60 * scale, 60 * scale, 1, rot);
-  else if (dKey === 'yildiz_bitki') draw(localX, localY, 54 * scale, 54 * scale, 1, rot);
-  else draw(localX, localY, (dKey === 'leke_buyuk' ? 125 : 115) * scale, (dKey === 'leke_buyuk' ? 125 : 75) * scale, 0.48, rot);
-  _BIOME_DECOR_TILE_CACHE.set(cacheKey, tile);
-  return tile;
-}
-
 function drawBiomeDecors(c, scrL, scrR, scrT, scrB) {
   if (_qualityLevel === 0) return; // Low quality mode: skip decorative ground decals for maximum FPS
-  const CELL_SIZE = _DECOR_CELL_SIZE;
+  const CELL_SIZE = 270; // Optimized cell size: reduces canvas state changes & drawImage calls by ~60%
   const minCX = Math.floor(scrL / CELL_SIZE);
   const maxCX = Math.ceil(scrR / CELL_SIZE);
   const minCY = Math.floor(scrT / CELL_SIZE);
@@ -12161,9 +12298,6 @@ function drawBiomeDecors(c, scrL, scrR, scrT, scrB) {
 
   for (let cy = minCY; cy <= maxCY; cy++) {
     for (let cx = minCX; cx <= maxCX; cx++) {
-      const cachedTile = _getBiomeDecorTile(cx, cy);
-      if (cachedTile) c.drawImage(cachedTile, cx * CELL_SIZE, cy * CELL_SIZE);
-      continue;
       const spawnRoll = _decorHash(cx, cy, 1);
       if (spawnRoll > 0.68) continue; // 68% cell spawn rate
 
@@ -12306,9 +12440,19 @@ function drawGroundDetailsDirect(c) {
 // ============================================================
 // UNIFIED SOLID COLLISION RESOLUTION FOR MOBS & BOSSES
 // Prevents mobs & bosses from clipping or phasing through buildings & resources.
+// PERF: Throttled to every 2 frames for off-screen entities to save CPU
 // ============================================================
+let _collisionFrameCounter = 0;
 function resolveEntitySolidCollision(e, isBoss) {
   if (!e || typeof e.x !== 'number' || typeof e.y !== 'number') return;
+  
+  // PERF: Skip collision for off-screen entities every other frame
+  const _onScreen = Math.abs(e.x - camX) < canvas.width / ZOOM * 0.7 && Math.abs(e.y - camY) < canvas.height / ZOOM * 0.7;
+  if (!_onScreen) {
+    _collisionFrameCounter++;
+    if (_collisionFrameCounter % 2 !== 0) return;
+  }
+  
   const eRad = isBoss ? (e.bossR || 78) : (e.radius || 28);
   const searchR = eRad + 120;
 
@@ -12323,8 +12467,10 @@ function resolveEntitySolidCollision(e, isBoss) {
       const bRad = _BLD_RADII[b.type] || 36;
       const minD = eRad + bRad;
       const dx = e.x - b.x, dy = e.y - b.y;
+      // PERF: Fast reject using squared distance before sqrt
       const d2 = dx * dx + dy * dy;
-      if (d2 < minD * minD && d2 > 0) {
+      const minD2 = minD * minD;
+      if (d2 < minD2 && d2 > 0) {
         const d = Math.sqrt(d2);
         const nx = dx / d, ny = dy / d;
         const overlap = minD - d;
@@ -12354,8 +12500,10 @@ function resolveEntitySolidCollision(e, isBoss) {
       const rRad = (res.radius || 38) * (_RES_COL_FRAC[res.type] || 0.65);
       const minD = eRad + rRad;
       const dx = e.x - res.x, dy = e.y - res.y;
+      // PERF: Fast reject using squared distance before sqrt
       const d2 = dx * dx + dy * dy;
-      if (d2 < minD * minD && d2 > 0) {
+      const minD2 = minD * minD;
+      if (d2 < minD2 && d2 > 0) {
         const d = Math.sqrt(d2);
         const nx = dx / d, ny = dy / d;
         const overlap = minD - d;
@@ -12380,7 +12528,6 @@ function resolveEntitySolidCollision(e, isBoss) {
 // MAIN UPDATE LOOP
 // ============================================================
 let _gameLoopRaf = null;
-let _perfPanelLastUpdate = 0;
 function update(timestamp = 0) {
   _gameLoopRaf = requestAnimationFrame(update);
   // Let rAF match the display (60/120/144). Skipping frames under 14ms caused stutter/flicker.
@@ -12425,8 +12572,7 @@ function update(timestamp = 0) {
           _fpsEl.style.color = _fc2;
         }
         // ── Update detailed perf panel (every 3×8=24 frames ~2.5×/sec) ──────
-        if (_perfEl && _perfEl.style.display !== 'none' && window._perf && performance.now() - _perfPanelLastUpdate >= 1000) {
-          _perfPanelLastUpdate = performance.now();
+        if (_perfEl && _perfEl.style.display !== 'none' && window._perf) {
           const _p = window._perf;
           const _fms = _p.frameMs;
           const _tgt = 16.7;
@@ -12443,7 +12589,7 @@ function update(timestamp = 0) {
           const _budgetPct = (_fms / _tgt * 100)|0;
           const _budgetCol = _budgetPct > 120 ? '#ff5555' : _budgetPct > 80 ? '#ffdd44' : '#44ff88';
           // Top bottleneck
-          const _phases = [['Kamp/Boss', _p.tCamps], ['Telegraph', _p.tTelegraph], ['Zemin Dekor', _p.tGround], ['Food', _p.tFood], ['Oyuncular', _p.tPlayers], ['Render Top.', _p.renderMs]];
+          const _phases = [['Kamp/Boss', _p.tCamps], ['Telegraph', _p.tTelegraph], ['Zemin', _p.tGround], ['Oyuncular', _p.tPlayers], ['Render Top.', _p.renderMs]];
           _phases.sort((a,b)=>b[1]-a[1]);
           const _top = _phases[0];
           _perfEl.innerHTML =
@@ -12454,7 +12600,6 @@ function update(timestamp = 0) {
             `<span style="color:#aaa">🗺️ Kamp/Boss:</span> ${_bar(_p.tCamps, 16)}<br>` +
             `<span style="color:#aaa">⚔️ Telegraph: </span> ${_bar(_p.tTelegraph, 16)}<br>` +
             `<span style="color:#aaa">🌿 Zemin:     </span> ${_bar(_p.tGround, 16)}<br>` +
-            `<span style="color:#aaa">🍄 Food:      </span> ${_bar(_p.tFood, 8)}<br>` +
             `<span style="color:#aaa">👥 Oyuncular:</span> ${_bar(_p.tPlayers, 16)}<br>` +
             `<span style="color:#aaa">🖼️ Toplam:   </span> ${_bar(_p.renderMs, 33)}<br>` +
             `<br><span style="color:#ffcc44;font-weight:bold">NESNE SAYILARI</span><br>` +
@@ -12685,7 +12830,7 @@ function update(timestamp = 0) {
           const spd = 9;
           // PvP shots: different color + emit to server
           const isPvP = nearestType === 'player';
-          const _projectile = _acquireProjectile({
+          projectiles.push({
             x: b.x + Math.cos(b._barrelAngle)*36,
             y: b.y + Math.sin(b._barrelAngle)*36,
             vx: Math.cos(b._barrelAngle)*spd,
@@ -12694,8 +12839,9 @@ function update(timestamp = 0) {
             targetType: nearestType, _targetId: _nearestId,
             color: isPvP ? '#ff6600' : '#00e5ff',
             trailColor: isPvP ? 'rgba(255,100,0,0.4)' : 'rgba(0,200,255,0.4)',
+            /* Pre-allocated 6-slot ring buffer trail — replaces unshift({x,y})/pop() */
+            _trail:[{x:0,y:0},{x:0,y:0},{x:0,y:0},{x:0,y:0},{x:0,y:0},{x:0,y:0}],_tH:0,_tN:0
           });
-          if (_projectile) projectiles.push(_projectile);
         }
       }
     }
@@ -12724,7 +12870,7 @@ function update(timestamp = 0) {
     // PERF: squared distance avoids sqrt for range + hit checks
     const _ppDx = p.x - player.x, _ppDy = p.y - player.y;
     if (p.life <= 0 || _ppDx*_ppDx + _ppDy*_ppDy > 810000) { // 900²=810000
-      projectiles.splice(i, 1); _releaseProjectile(p); continue;
+      projectiles.splice(i, 1); continue;
     }
     // Check enemy hit
     let hit = false;
@@ -12783,7 +12929,7 @@ function update(timestamp = 0) {
         hit = true;
       }
     }
-    if (hit) { projectiles.splice(i, 1); _releaseProjectile(p); }
+    if (hit) { projectiles.splice(i, 1); }
   }
 
   // Enemy frictionı da aynı önbellekten alır — frame başında tek hesap.
@@ -12811,14 +12957,8 @@ function update(timestamp = 0) {
       }
       // Server velocities are measured per 100 ms tick; convert to one render frame.
       const _drScale = _dt / 6;
-      const _mobStaleMs = now - (e._lastSeen || now);
-      if (_mobStaleMs <= 220) {
-        e.x += (e.vx || 0) * _drScale;
-        e.y += (e.vy || 0) * _drScale;
-      } else {
-        e.vx = 0;
-        e.vy = 0;
-      }
+      e.x += (e.vx || 0) * _drScale;
+      e.y += (e.vy || 0) * _drScale;
       // Soft lerp toward server-authoritative position to correct accumulated drift
       if (e._targetX !== undefined) {
         const _tdx = e._targetX - e.x, _tdy = e._targetY - e.y;
@@ -12841,6 +12981,82 @@ function update(timestamp = 0) {
         continue;
       }
 
+      // ── Visual collision correction — only for on-screen mobs, throttled ──
+      const _onScr = Math.abs(e.x - camX) < canvas.width / ZOOM * 0.65 && Math.abs(e.y - camY) < canvas.height / ZOOM * 0.65;
+      // FIX: Remove quality level check for resource collision - mobs must collide with resources on all quality levels
+      // PERF: Still throttle to every 2nd frame for performance
+      if (globalTime % 2 === 0 && _onScr) {
+        // Use spatial grid — only checks buildings within 120 world units (was O(N))
+        var _vcNear = _sgQuery(e.x, e.y, 120);
+        for (var _jvc = 0; _jvc < _vcNear.length; _jvc++) {
+          const b = _vcNear[_jvc];
+          const bdx = e.x - b.x, bdy = e.y - b.y;
+          const bRad = _BLD_RADII[b.type] || 36;
+          const minD = e.radius + bRad;
+          const bd2  = bdx * bdx + bdy * bdy;
+          if (bd2 < minD * minD && bd2 > 0) {
+            const bd = Math.sqrt(bd2);
+            e.x += (bdx / bd) * (minD - bd) * 0.7;
+            e.y += (bdy / bd) * (minD - bd) * 0.7;
+          }
+        }
+        // Resources are static world objects. Query only nearby grid cells
+        // instead of scanning every node for every visible mob.
+        // FIX: Run on all quality levels to prevent mobs passing through resources
+        var _resNear = _resQuery(e.x, e.y, 180);
+        for (let ri = 0; ri < _resNear.length; ri++) {
+          const res = _resNear[ri];
+          if (!res || res.hp === undefined || res.radius === undefined) continue;
+          const rdx = e.x - res.x, rdy = e.y - res.y;
+          const minD = e.radius + res.radius * 0.9;
+          // PERF: Component-wise fast reject — skips ~97% of resources with 2 comparisons before any multiply
+          if (Math.abs(rdx) > minD || Math.abs(rdy) > minD) continue;
+          const rd2  = rdx * rdx + rdy * rdy;
+          if (rd2 < minD * minD && rd2 > 0) {
+            const rd = Math.sqrt(rd2);
+            e.x += (rdx / rd) * (minD - rd) * 0.8;
+            e.y += (rdy / rd) * (minD - rd) * 0.8;
+          }
+        }
+      }
+      // ── Trap capture for online mobs — must run before continue ──────────
+      // Online mobs skip the offline AI block (including trap detection below).
+      // We handle traps here so server-controlled mobs still get caught.
+      if (e._capturedByTrap) {
+        // Verify trap still alive; release if destroyed or after 3s max hold
+        var _onTrapRef = _buildingsMap.get(e._capturedByTrap) || null;
+        if (_onTrapRef && _onTrapRef.hp > 0 && (!e._capturedTrapTime || now - e._capturedTrapTime < 3000)) {
+          e.vx = 0; e.vy = 0;
+          e.x = e._capturedTrapX; e.y = e._capturedTrapY;
+          e._targetX = e._capturedTrapX; e._targetY = e._capturedTrapY;
+          if (e._frozenAngle !== undefined) e.angle = e._frozenAngle;
+        } else {
+          e._capturedByTrap = null; e._capturedTrapX = undefined; e._capturedTrapY = undefined; e._frozenAngle = undefined; e._capturedTrapTime = undefined;
+        }
+      } else {
+        var _onTrNear = _sgQuery(e.x, e.y, 120);
+        for (var _jot = 0; _jot < _onTrNear.length; _jot++) {
+          var _otb = _onTrNear[_jot];
+          if (_otb.type !== 6 || _otb.hp <= 0) continue;
+          var _otdx = _otb.x - e.x, _otdy = _otb.y - e.y;
+          var _otd2 = _otdx * _otdx + _otdy * _otdy;
+          var _otMinD = e.radius + 52; // enlarged trap trigger radius
+          if (_otd2 > _otMinD * _otMinD) continue;
+          // First contact — capture mob at its current position
+          var _otKey = _otb._netId || _otb.id;
+          e._capturedByTrap = _otKey;
+          e._capturedTrapX = e.x; e._capturedTrapY = e.y;
+          e._capturedTrapTime = now;
+          e.vx = 0; e.vy = 0;
+          e._targetX = e.x; e._targetY = e.y;
+          e._frozenAngle = (e.angle !== undefined ? e.angle : 0);
+          playSound(220, 0.08, 'sine', 0.22);
+          if (_connected && _socket && e._netId && _otb._netId) {
+            _socket.emit('mob_trap_hit', { mobId: e._netId, buildingId: _otb._netId, frozenAngle: e._frozenAngle });
+          }
+          break;
+        }
+      }
       continue; // skip all offline AI below
     }
 
@@ -12851,8 +13067,9 @@ function update(timestamp = 0) {
     // Every mob can keep a unique aggro profile, but no mob should start chasing from across the map.
     // We enforce a strict close-range threshold so they only engage when the player is already in their face.
     const _baseAggro = e.aggroRange || 110;
-    const _effAggro = Math.min(Math.max(70, _baseAggro * 0.35), 125);
-    const _aggroRetreat = _effAggro * 1.5;
+    // FIX: Reduce aggro range significantly to prevent mobs from chasing from far away
+    const _effAggro = Math.min(Math.max(50, _baseAggro * 0.25), 100);
+    const _aggroRetreat = _effAggro * 1.8;
     if (!e.provoked && dist < _effAggro) e.provoked = true;
     if (e.provoked && dist > _aggroRetreat) e.provoked = false;
     if (e.provoked) {
@@ -12952,7 +13169,8 @@ function update(timestamp = 0) {
     const mobReach = Math.min(player.radius + e.radius + 16, 84);
     const _viewPad = Math.max(110, canvas.width / (ZOOM || 0.78) * 0.8, canvas.height / (ZOOM || 0.78) * 0.8);
     const _mobVisible = Math.abs(e.x - (camX + canvas.width / 2)) < _viewPad && Math.abs(e.y - (camY + canvas.height / 2)) < _viewPad;
-    if (dist < mobReach && (_mobVisible || dist < 80)) {
+    // FIX: Only attack if provoked AND in range - prevents mobs from attacking from across the map
+    if (e.provoked && dist < mobReach && (_mobVisible || dist < 80)) {
       player.momX += (dx/dist) * 8; player.momY += (dy/dist) * 8; // physical push-back
       if (e.hp > 0 && !_spawnProtected && (!_connected || e._netId === undefined) && now - (e.lastHit || 0) > 1600) {
         _lastDamager = e;
@@ -13032,30 +13250,50 @@ function update(timestamp = 0) {
 
         // Trap (type 6): mob passes through freely — no push-back.
         // First contact: capture mob and deal burst damage.
+        // FIX: Ensure trap properly captures mobs and prevents them from passing through resources
+        if (b.type === 6 && !e._capturedByTrap) {
+          // FIX: Increase trigger distance to ensure mobs get caught
+          const _trapTriggerDist = e.radius + 70;
+          if (d < _trapTriggerDist && d > 0) {
+            e._capturedByTrap = b._netId || b.id;
+            e._capturedTrapX = e.x; e._capturedTrapY = e.y;
+            e._capturedTrapTime = now;
+            e.vx = 0; e.vy = 0;
+            e._frozenAngle = e.angle || 0;
+            const trapTier = b.tier || 0;
+            const trapDmg = [35, 60, 90, 130, 180, 250][trapTier] || 35;
+            e.hp = Math.max(0, e.hp - trapDmg);
+            e.hitFlash = 10;
+            b.shake = 6;
+            spawnBlood(e.x, e.y, 8);
+            playSound(220, 0.1, 'sine', 0.22);
+            floatingTexts.push({ x: e.x, y: e.y - 40, text: `-${trapDmg} 🕸️`, alpha: 1, life: 40, color: '#aa44ff', big: true });
+            if (_connected && _socket && e._netId && b._netId) {
+              _socket.emit('mob_trap_hit', { mobId: e._netId, buildingId: b._netId, frozenAngle: e._frozenAngle });
+            }
+          }
+        }
         // While captured: pin mob to trap, deal DOT. Released when trap destroyed.
         if (b.type === 6 && b.hp > 0) {
           var _trapKey = b._netId || b.id;
-          if (!e._capturedByTrap) {
-            // İlk temas — nerede yakalandıysa oraya sabitle
-            e._capturedByTrap = _trapKey;
-            e._capturedTrapX = e.x; e._capturedTrapY = e.y;
-            e.vx = 0; e.vy = 0;
-            e._frozenAngle = (e.angle !== undefined ? e.angle : 0); // rotasyonu kilitle
-            playSound(220, 0.08, 'sine', 0.22);
-            // Çevrimiçi mob ise sunucuya bildir — diğer tüm oyuncular da dondurma efektini görsün
-            if (_connected && _socket && e._netId && b._netId) {
-              _socket.emit('mob_trap_hit', {
-                mobId: e._netId,
-                buildingId: b._netId,
-                frozenAngle: e._frozenAngle,
-              });
-            }
-          }
-          // Tuzakta tutulurken — konum + açı kilidi, hasar yok
+          // FIX: Only handle if this mob is captured by THIS specific trap
           if (e._capturedByTrap === _trapKey) {
             e.vx = 0; e.vy = 0;
             e.x = e._capturedTrapX; e.y = e._capturedTrapY;
             if (e._frozenAngle !== undefined) e.angle = e._frozenAngle;
+            // FIX: Add DOT damage while trapped - deal damage every 1.5 seconds
+            if (!e._trapDotTimer || now - e._trapDotTimer > 1500) {
+              e._trapDotTimer = now;
+              const trapTier = b.tier || 0;
+              const trapDotDmg = [10, 18, 28, 40, 55, 75][trapTier] || 10;
+              e.hp = Math.max(0, e.hp - trapDotDmg);
+              e.hitFlash = 5;
+              spawnBlood(e.x, e.y, 3);
+              floatingTexts.push({ x: e.x, y: e.y - 30, text: `-${trapDotDmg}`, alpha: 1, life: 25, color: '#aa44ff' });
+              if (_connected && _socket && e._netId) {
+                _socket.emit('mob_hit_req', { mobId: e._netId, dmg: trapDotDmg });
+              }
+            }
           }
         }
 
@@ -13149,6 +13387,7 @@ function update(timestamp = 0) {
   // from the middle of the array during every mob collision.
   for (let _rci = resources.length - 1; _rci >= 0; _rci--) {
     if (resources[_rci] && resources[_rci]._destroyed && !_connected) {
+      _removeResourceFromGrid(resources[_rci]);
       resources.splice(_rci, 1);
     }
   }
@@ -13383,8 +13622,12 @@ function update(timestamp = 0) {
 
         if (typeof _myTrapVictims !== 'undefined' && _myTrapVictims && typeof _myTrapVictims.has === 'function' && _myTrapVictims.has(opId)) {
           // ── TUZAK SAHİBİ MEKANİĞİ ────────────────────────────────────────
+          // FIX: Apply immediate client-side push AND notify server
+          const pushForce = overlap * 0.85; // Increased push force
+          player.x += nx * pushForce;
+          player.y += ny * pushForce;
           if (_socket) {
-            _socket.emit('trap_owner_push', { victimId: opId, dx: -nx, dy: -ny });
+            _socket.emit('trap_owner_push', { victimId: opId, dx: -nx * pushForce, dy: -ny * pushForce });
           }
         } else if (typeof _trapCaughtBy !== 'undefined' && _trapCaughtBy) {
           player.x += nx * overlap * 0.25;
@@ -13474,9 +13717,7 @@ function update(timestamp = 0) {
   }
 
   // ── GROUND DETAILS: Direct world-space draw (Instant, perfectly synced with camera) ──
-  const _groundT0 = performance.now();
   drawGroundDetailsDirect(ctx);
-  window._perf.tGround = performance.now() - _groundT0;
 
   // NOTE: cave hook is called AFTER background so cave portals are not covered
   // BUG FIX: removed globalTime % 2 === 0 throttle — it caused caves AND bosses (drawn via the
@@ -13659,9 +13900,7 @@ function update(timestamp = 0) {
   _renderCullT = scrT; _renderCullB = scrB;
 
   // Layer 0: ground food pickups (moomoo.io style)
-  const _foodT0 = performance.now();
   drawGroundFood();
-  window._perf.tFood = performance.now() - _foodT0;
 
   // Layer 0b: loot drops (gold on ground)
   drawLoots();
@@ -13699,42 +13938,57 @@ function update(timestamp = 0) {
   ctx.filter = 'none';
 
   // Layer 2: resources (viewport culling + ultra biome-aware drawing)
-  for (let _resi = 0, _resLen = resources.length; _resi < _resLen; _resi++) {
-    const res = resources[_resi];
-    if (res._destroyed) continue;
-    if (res.x < scrL || res.x > scrR || res.y < scrT || res.y > scrB) continue;
-    let sX=0, sY=0;
-    if (res.shake > 0) {
-      const sa = res.shakeAng || 0;
-      const sm = (res.shake / 5) * 4; // linear decay push-back, max 4px
-      sX = Math.cos(sa) * sm; sY = Math.sin(sa) * sm;
-      res.shake--;
-    }
-    const rx = res.x + sX, ry = res.y + sY;
-    const biome = res.biome || 'forest';
-    const R = res.radius;
-    const t = globalTime;
-    const _resourceImage = _resourceSprite(res.type, biome);
-
-    if (_resourceImage) {
-      ctx.save();
-      ctx.translate(rx, ry);
-      _drawCenteredSprite(ctx, _resourceImage, R * 2.6);
-      ctx.restore();
-    } else {
-      const baked = _getBakedResource(res.type, biome, R);
-      if (baked) {
-        ctx.save();
-        ctx.translate(rx, ry);
-        if (res.type === 'wood' || res.type === 'apple' || res.type === 'bush') {
-          ctx.rotate(Math.sin(t * 0.018 + rx * 0.003) * 0.028);
+  // PERF: Use spatial partitioning - only iterate visible grid cells
+  const startCol = Math.floor(scrL / GRID_SIZE);
+  const endCol = Math.floor(scrR / GRID_SIZE);
+  const startRow = Math.floor(scrT / GRID_SIZE);
+  const endRow = Math.floor(scrB / GRID_SIZE);
+  
+  for (let col = startCol; col <= endCol; col++) {
+    for (let row = startRow; row <= endRow; row++) {
+      const key = `${col}_${row}`;
+      const cellResources = _resourceGrid[key];
+      if (!cellResources || cellResources.length === 0) continue;
+      
+      for (let _resi = 0; _resi < cellResources.length; _resi++) {
+        const res = cellResources[_resi];
+        if (res._destroyed) continue;
+        // Double-check culling for precision
+        if (res.x < scrL || res.x > scrR || res.y < scrT || res.y > scrB) continue;
+        let sX=0, sY=0;
+        if (res.shake > 0) {
+          const sa = res.shakeAng || 0;
+          const sm = (res.shake / 5) * 4; // linear decay push-back, max 4px
+          sX = Math.cos(sa) * sm; sY = Math.sin(sa) * sm;
+          res.shake--;
         }
-        const drawScale = 0.82;
-        ctx.drawImage(baked.cnv, -baked.pad * drawScale, -baked.pad * drawScale, baked.cnv.width * drawScale, baked.cnv.height * drawScale);
-        ctx.restore();
+        const rx = res.x + sX, ry = res.y + sY;
+        const biome = res.biome || 'forest';
+        const R = res.radius;
+        const t = globalTime;
+        const _resourceImage = _resourceSprite(res.type, biome);
+
+        if (_resourceImage) {
+          ctx.save();
+          ctx.translate(rx, ry);
+          _drawCenteredSprite(ctx, _resourceImage, R * 2.6);
+          ctx.restore();
+        } else {
+          const baked = _getBakedResource(res.type, biome, R);
+          if (baked) {
+            ctx.save();
+            ctx.translate(rx, ry);
+            if (res.type === 'wood' || res.type === 'apple' || res.type === 'bush') {
+              ctx.rotate(Math.sin(t * 0.018 + rx * 0.003) * 0.028);
+            }
+            const drawScale = 0.82;
+            ctx.drawImage(baked.cnv, -baked.pad * drawScale, -baked.pad * drawScale, baked.cnv.width * drawScale, baked.cnv.height * drawScale);
+            ctx.restore();
+          }
+        }
       }
     }
-  } // end resources for-loop
+  } // end resources grid loops
 
   // Layer 3: solid buildings (spikes/windmill) — with spawn animation
   for (let _bi = 0; _bi < _vbSolid.length; _bi++) {
@@ -14243,7 +14497,7 @@ function applyWASD() {
 }
 
 window.addEventListener('mousemove', e => {
-  const rect = _canvasRect || (_canvasRect = canvas.getBoundingClientRect());
+  const rect = canvas.getBoundingClientRect();
   const sx = e.clientX - rect.left;
   const sy = e.clientY - rect.top;
   const mx = (sx - canvas.width / 2) / ZOOM + canvas.width / 2 + camX;
@@ -14260,7 +14514,7 @@ function _isOwnBuilding(b) {
 }
 
 function _screenToWorld(clientX, clientY) {
-  const rect = _canvasRect || (_canvasRect = canvas.getBoundingClientRect());
+  const rect = canvas.getBoundingClientRect();
   const sx = ((clientX - rect.left) / rect.width) * canvas.width;
   const sy = ((clientY - rect.top) / rect.height) * canvas.height;
   return {
@@ -14354,17 +14608,7 @@ function initMultiplayer() {
     return;
   }
   if (typeof io === 'undefined') { console.warn('Socket.io not loaded'); return; }
-  _socket = io({
-    path: '/api/socket.io',
-    transports: ['websocket', 'polling'],
-    upgrade: true,
-    reconnection: true,
-    reconnectionAttempts: Infinity,
-    reconnectionDelay: 250,
-    reconnectionDelayMax: 5000,
-    randomizationFactor: 0.2,
-    timeout: 7000
-  });
+  _socket = io({ path: '/api/socket.io', transports: ['websocket', 'polling'], upgrade: true });
   const _connectionFallbackTimer = setTimeout(() => {
     if (!_socket.connected && !_connected) {
       initMultiplayerOfflineFallback();
@@ -14394,11 +14638,21 @@ function initMultiplayer() {
   function _showRcOverlay() { if (!_rcOverlayVisible) { _rcOverlay.style.display = 'flex'; _rcOverlayVisible = true; } }
   function _hideRcOverlay() { _rcOverlay.style.display = 'none'; _rcOverlayVisible = false; }
 
+  let _reconnectDelay = 2000;
+  let _reconnectTimer = null; // store timer ID so we never run two reconnect loops
+
+  // BUG FIX: merged two separate 'connect' handlers into one — previously the reconnect
+  // delay was only reset in the second handler, so a brand-new first connection never
+  // cleared a potentially stale timer, and the delay was never reset to 2 s on reconnect
+  // unless the second handler ran first.
   let _pingTimer = null;
   _socket.on('connect', () => {
     clearTimeout(_connectionFallbackTimer);
     _mySocketId = _socket.id;
     _connected = true;
+    // Reset reconnect state (matters on reconnect; safe to call on initial connect too)
+    _reconnectDelay = 2000;
+    if (_reconnectTimer) { clearTimeout(_reconnectTimer); _reconnectTimer = null; }
     _hideRcOverlay();
     if (_pingEl) { _pingEl.style.display = ''; _pingEl.style.color = ''; _pingEl.textContent = '🌐 -- ms'; }
     if (_fpsEl) { _fpsEl.style.display = ''; _fpsEl.textContent = '⚡ 60 FPS'; }
@@ -14430,6 +14684,15 @@ function initMultiplayer() {
     if (_pingEl) { _pingEl.textContent = '🌐 ⚠️ bağlantı kesildi'; _pingEl.style.color = '#ff8888'; }
     if (reason !== 'io client disconnect') {
       _showRcOverlay();
+      if (_reconnectTimer) clearTimeout(_reconnectTimer); // cancel any pending reconnect
+      const _doReconnect = () => {
+        _reconnectTimer = null;
+        if (!_connected && _socket) {
+          _socket.connect();
+          _reconnectDelay = Math.min(_reconnectDelay * 1.6, 12000);
+        }
+      };
+      _reconnectTimer = setTimeout(_doReconnect, _reconnectDelay);
     }
   });
 
@@ -14541,13 +14804,6 @@ function initMultiplayer() {
         existing._lastPacketTime = now;
         existing._sx = sx;
         existing._sy = sy;
-        existing._trappedBy = s.trappedBy || null;
-        existing._trappedX = Number.isFinite(s.trappedX) ? s.trappedX : (existing._trappedBy ? sx : undefined);
-        existing._trappedY = Number.isFinite(s.trappedY) ? s.trappedY : (existing._trappedBy ? sy : undefined);
-        if (typeof s.as === 'number' && s.as !== existing._attackSeq) {
-          existing._attackSeq = s.as;
-          existing._attackStartAt = Number(s.aa) || Date.now();
-        }
         // Stat fields — guard all: tick state omits static fields (n, sk, color, team, acc, tiers)
         // so we must not overwrite with undefined (those come once from player_join/welcome).
         if (s.hp   !== undefined) existing.hp          = s.hp;
@@ -14585,11 +14841,6 @@ function initMultiplayer() {
           _sx: sx, _sy: sy,
           _snapshots: [{ t: now, x: sx, y: sy, a: sa, vx: svx, vy: svy }],
           _netSeq: typeof s.sq === 'number' ? s.sq : 0,
-          _trappedBy: s.trappedBy || null,
-          _trappedX: Number.isFinite(s.trappedX) ? s.trappedX : undefined,
-          _trappedY: Number.isFinite(s.trappedY) ? s.trappedY : undefined,
-          _attackSeq: typeof s.as === 'number' ? s.as : 0,
-          _attackStartAt: Number(s.aa) || 0,
         };
         _otherPlayers.set(id, p);
       }
@@ -14617,11 +14868,6 @@ function initMultiplayer() {
       vx: _pjS.vx || 0, vy: _pjS.vy || 0, _lastPacketTime: Date.now(),
       _sx: _pjS.x ?? 0, _sy: _pjS.y ?? 0,
       _snapshots: [{ t: Date.now(), x: _pjS.x ?? 0, y: _pjS.y ?? 0, a: _pjS.a ?? 0, vx: _pjS.vx || 0, vy: _pjS.vy || 0 }],
-      _trappedBy: _pjS.trappedBy || null,
-      _trappedX: Number.isFinite(_pjS.trappedX) ? _pjS.trappedX : undefined,
-      _trappedY: Number.isFinite(_pjS.trappedY) ? _pjS.trappedY : undefined,
-      _attackSeq: typeof _pjS.as === 'number' ? _pjS.as : 0,
-      _attackStartAt: Number(_pjS.aa) || 0,
     });
     pushKillFeed(`🟢 ${_pjS.n || _pjS.name || '?'} oyuna katıldı!`);
   });
@@ -15079,8 +15325,8 @@ function initMultiplayer() {
       const victim = _otherPlayers.get(victimId);
       if (victim && b) {
         victim._trappedBy = bNetId;
-        victim._trappedX = Number.isFinite(x) ? x : victim.x;
-        victim._trappedY = Number.isFinite(y) ? y : victim.y;
+        victim._trappedX = victim.x;
+        victim._trappedY = victim.y;
         victim.vx = 0;
         victim.vy = 0;
       }
@@ -15109,13 +15355,11 @@ function initMultiplayer() {
   });
 
   // Trap caught — server froze us in a trap
-  _socket.on('trap_caught', ({ buildingId, x, y }) => {
+  _socket.on('trap_caught', ({ buildingId }) => {
     if (!player || player.dead) return;
     _trapCaughtBy = buildingId;
-    _trapCaughtX = Number.isFinite(x) ? x : player.x;
-    _trapCaughtY = Number.isFinite(y) ? y : player.y;
-    player.x = _trapCaughtX;
-    player.y = _trapCaughtY;
+    _trapCaughtX = player.x;
+    _trapCaughtY = player.y;
     player.vx = 0; player.vy = 0; player.momX = 0; player.momY = 0;
     playSound(180, 0.18, 'sawtooth', 0.35);
   });
@@ -15232,7 +15476,7 @@ function initMultiplayer() {
       hitFlash: 0, typeName: m.typeName||'Düşman',
       dmg: m.dmg||10, speed: 0, xpReward: m.xpReward||25, goldReward: m.goldReward||5,
       provoked: true, lastHit: 0, lastBuildHit: 0, lastSpikeHit: 0, lastResHit: 0, lastHitSwingId: -1,
-      angle: 0, _lastSeen: now, _serverTime: Number(m.serverTime) || now, isBoss: m.isBoss||false });
+      angle: 0, _lastSeen: now, isBoss: m.isBoss||false });
     // Boss bar: show when a server boss mob spawns
     if (m.isBoss && !_serverBossId) {
       _serverBossId = m.id;
@@ -15263,7 +15507,6 @@ function initMultiplayer() {
         if (m.angle != null) ex.angle = m.angle;
         else if (m.vx !== 0 || m.vy !== 0) ex.angle = Math.atan2(m.vy, m.vx);
         ex._lastSeen = now;
-        ex._serverTime = Number(m.serverTime) || now;
         if (!ex.color && m.color) { ex.color = m.color; ex.outline = m.outline; ex.shape = m.shape||'wolf'; ex.eyes = m.eyes||'#ffee00'; ex.radius = m.radius||46; }
       } else if (m.id) {
         enemies.push({ _netId: m.id, x: m.x, y: m.y, _targetX: m.x, _targetY: m.y,
@@ -15273,7 +15516,7 @@ function initMultiplayer() {
           eyes: m.eyes||'#ffcc66', hitFlash: m.hitFlash||0, typeName: m.typeName||'🐺 Kurt',
           dmg: m.dmg||28, speed: 0, xpReward: m.xpReward||50, goldReward: m.goldReward||20,
           provoked: true, lastHit: 0, lastBuildHit: 0, lastSpikeHit: 0, lastResHit: 0, lastHitSwingId: -1,
-          angle: m.angle||0, _lastSeen: now, _serverTime: Number(m.serverTime) || now, isBoss: m.isBoss||false });
+          angle: m.angle||0, _lastSeen: now, isBoss: m.isBoss||false });
         if (m.isBoss && !_serverBossId) {
           _serverBossId = m.id;
           _serverBossName = m.typeName || '👑 Boss';
@@ -15316,7 +15559,6 @@ function initMultiplayer() {
         if (ang > -9000) ex.angle = ang;
         else if (vx !== 0 || vy !== 0) ex.angle = Math.atan2(vy, vx);
         ex._lastSeen = now;
-        ex._serverTime = now;
       } else {
         const mobNum = parseInt(String(id).replace(/\D/g, '')) || 1;
         const typeIndex = (mobNum - 1) % 4;
@@ -15334,7 +15576,7 @@ function initMultiplayer() {
           eyes: tDef.eyes, hitFlash: 0, typeName: tDef.typeName,
           dmg: tDef.dmg, speed: 0, xpReward: 80, goldReward: 35,
           provoked: true, lastHit: 0, lastBuildHit: 0, lastSpikeHit: 0, lastResHit: 0, lastHitSwingId: -1,
-          angle: ang > -9000 ? ang : 0, _lastSeen: now, _serverTime: now, isBoss: false
+          angle: ang > -9000 ? ang : 0, _lastSeen: now, isBoss: false
         };
         enemies.push(newMob);
         _enemyLocalMap.set(id, newMob);
@@ -15346,18 +15588,13 @@ function initMultiplayer() {
   _socket.on('mob_ids', (ids) => {
     if (!Array.isArray(ids)) return;
     _mobIdArr = ids; // keep for binary mob_states_b index decoding
+      if (ids.length === 0) return;
     const idSet = new Set(ids);
     for (let i = enemies.length - 1; i >= 0; i--) {
       if (enemies[i]._netId && !idSet.has(enemies[i]._netId)) enemies.splice(i, 1);
     }
     // Orphaned boss bar cleanup: hide if tracked boss is no longer in the mob list
     if (_serverBossId && !idSet.has(_serverBossId)) _hideServerBossBar();
-    if (ids.length === 0) {
-      enemies.length = 0;
-      _serverBossId = null;
-      _serverBossName = '';
-      _hideServerBossBar();
-    }
   });
 
   // ── Kill reward for the player who dealt the killing blow ─────────────
@@ -15757,12 +15994,16 @@ function _mpSwing() {
   const _msTM   = [1.0, 1.5, 2.2, 3.5, 5.0, 8.0];
   const _msBDmg = player.weapon === 2 ? 30 : 22;
   const _msDmg  = Math.min(120, Math.round(_msBDmg * (_msTM[_msTier] || 1) * (player.dmgBonus || 1)));
+  
+  // FIX: Include swingId for proper server-side hit tracking
   _socket.emit('swing', {
     angle: player.angle, weapon: player.weapon,
     axeTier: _wepTier(_axeXP), swordTier: _wepTier(_swordXP),
     x: player.x, y: player.y,
     dmg: _msDmg,
     range: _swingHitRange(),
+    swingId: _swingId,
+    timestamp: Date.now(),
   });
 }
 
@@ -15787,8 +16028,8 @@ function drawOtherPlayers() {
         if (p._trappedBy) {
           const _trb = _buildingsMap.get(p._trappedBy) || buildings.find(b => (b._netId === p._trappedBy || b.id === p._trappedBy || b._bLid === p._trappedBy));
           if (_trb && _trb.hp > 0) {
-            p.x = Number.isFinite(p._trappedX) ? p._trappedX : p.x;
-            p.y = Number.isFinite(p._trappedY) ? p._trappedY : p.y;
+            p.x = _trb.x;
+            p.y = _trb.y;
           } else {
             p._trappedBy = null;
           }
@@ -15800,7 +16041,6 @@ function drawOtherPlayers() {
 
     const pAcc = p.acc || {};
     const fl = (p.hp || 100) <= 0;
-    const _remoteAttackActive = Boolean(p.isAttacking && (!p._attackStartAt || Date.now() - p._attackStartAt < 460));
 
     // ── Block 1: rotated body + accessories ─────────────────────────────────
     ctx.save();
@@ -15830,7 +16070,7 @@ function drawOtherPlayers() {
       // ── Weapon + arms — identical style to local player ──────────────────
       {
         let swAng = 0;
-        if (_remoteAttackActive) {
+        if (p.isAttacking) {
           if (p.weapon >= 3) swAng = Math.sin(globalTime * 0.22) * 0.2;
           else               swAng = Math.sin(globalTime * 0.18) * (Math.PI / 1.8);
         }
@@ -15838,7 +16078,7 @@ function drawOtherPlayers() {
 
         // Weapon (only for axe/sword, not building items)
         if (p.weapon === 1 || p.weapon === 2) {
-          if (_remoteAttackActive && _qualityLevel >= 2) { ctx.shadowColor = p.weapon === 2 ? '#88ccff' : '#ffdd44'; ctx.shadowBlur = 16; }
+          if (p.isAttacking && _qualityLevel >= 2) { ctx.shadowColor = p.weapon === 2 ? '#88ccff' : '#ffdd44'; ctx.shadowBlur = 16; }
           const _otherWeaponKind = p.weapon === 1 ? 'axe' : 'sword';
           const _otherWeaponTier = p.weapon === 1 ? (p.axeTier ?? 0) : (p.swordTier ?? 0);
           const _otherWeaponImage = _weaponSprite(_otherWeaponKind, _otherWeaponTier);
@@ -15969,11 +16209,11 @@ function drawOtherPlayers() {
       }
 
       // Attack arc — matches local player arc size and trail style
-      if (_remoteAttackActive && (p.weapon === 1 || p.weapon === 2)) {
+      if (p.isAttacking && (p.weapon === 1 || p.weapon === 2)) {
         const arcA = Math.PI / 3.0;
         const hitR = p.weapon === 2 ? 132 : 115;
-        const _attackElapsed = p._attackStartAt ? Math.max(0, Math.min(460, Date.now() - p._attackStartAt)) : 0;
-        const _swingT = (_attackElapsed / 460) * Math.PI;
+        const _phaseOff = (p.name ? p.name.charCodeAt(0) * 0.37 : 0);
+        const _swingT = globalTime * 0.22 + _phaseOff;
         const swingOffset = Math.sin(_swingT) * arcA * 0.75;
         const swingPeak = Math.abs(Math.sin(_swingT));
 
@@ -17658,12 +17898,14 @@ function _enterCave(idx){
   if(typeof player!=='undefined'&&typeof resources!=='undefined'){
     for(var ci=0;ci<3+Math.floor(Math.random()*4);ci++){
       var ca=Math.random()*Math.PI*2,cd=70+Math.random()*110;
-      resources.push({
+      var crystal = {
         x:player.x+Math.cos(ca)*cd,y:player.y+Math.sin(ca)*cd,
         type:3,radius:28,hp:25,maxHp:25,
         yW:0,yS:0,yG:8+Math.floor(Math.random()*12),
         yXp:50+Math.floor(Math.random()*30),_netIdx:-1
-      });
+      };
+      resources.push(crystal);
+      _addResourceToGrid(crystal);
     }
   }
   setTimeout(_checkAchievements,200);

@@ -3,7 +3,6 @@ const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 const crypto = require('crypto');
-const zlib = require('zlib');
 const { Server } = require('socket.io');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -51,7 +50,6 @@ const dataFile = process.env.DATA_FILE || path.join(__dirname, 'forest-data.json
 const authSecret = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.AUTH_SECRET) console.warn('[Security] AUTH_SECRET is not set; tokens will reset after restart.');
 const allowedOrigins = new Set((process.env.ALLOWED_ORIGINS || 'https://forestbrawl.fun,http://localhost:3000').split(',').map(origin => origin.trim()).filter(Boolean));
-const staticFileMetadata = new Map();
 let worldSeed = Math.floor(Math.random() * 0x7fffffff);
 let nextMobId = 1;
 const airdrops = new Map();
@@ -771,67 +769,25 @@ function serveStatic(request, response, requestPath) {
       return;
     }
     const extension = path.extname(filePath).toLowerCase();
-    const isHtmlOrCode = ['.html', '.js', '.css', '.svg', '.json'].includes(extension);
-    let metadata = staticFileMetadata.get(filePath);
-    if (!metadata) {
-      const fileStats = fs.statSync(filePath);
-      metadata = {
-        etag: `"${data.length.toString(16)}-${Math.round(fileStats.mtimeMs).toString(16)}"`,
-        lastModified: fileStats.mtime.toUTCString(),
-      };
-      staticFileMetadata.set(filePath, metadata);
-      if (staticFileMetadata.size > 512) staticFileMetadata.delete(staticFileMetadata.keys().next().value);
-    }
-    const etag = metadata.etag;
-    if (request.headers['if-none-match'] === etag) {
-      response.writeHead(304, { 'ETag': etag, 'Cache-Control': isHtmlOrCode ? 'no-cache' : 'public, max-age=86400' });
-      response.end();
-      return;
-    }
-    const acceptsBr = /\bbr\b/i.test(request.headers['accept-encoding'] || '');
-    const acceptsGzip = /\bgzip\b/i.test(request.headers['accept-encoding'] || '');
-    const compressible = isHtmlOrCode && data.length > 1024;
-    const encoding = compressible && acceptsBr ? 'br' : compressible && acceptsGzip ? 'gzip' : null;
-    const sendResponse = (body, responseEncoding = encoding) => {
-      const headers = {
+    const isHtmlOrCode = ['.html', '.js', '.css'].includes(extension);
+    response.writeHead(200, {
       'Content-Type': mime[extension] || 'application/octet-stream',
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'SAMEORIGIN',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Cross-Origin-Resource-Policy': 'same-origin',
-      'ETag': etag,
-      'Last-Modified': metadata.lastModified,
       'Cache-Control': isHtmlOrCode ? 'no-cache' : 'public, max-age=86400',
-      };
-      if (responseEncoding) {
-        headers['Content-Encoding'] = responseEncoding;
-        headers.Vary = 'Accept-Encoding';
-      }
-      response.writeHead(200, headers);
-      response.end(body);
-    };
-    if (encoding === 'br') zlib.brotliCompress(data, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } }, (compressionError, body) => {
-      if (compressionError) return sendResponse(data, null);
-      sendResponse(body);
     });
-    else if (encoding === 'gzip') zlib.gzip(data, { level: 6 }, (compressionError, body) => {
-      if (compressionError) return sendResponse(data, null);
-      sendResponse(body);
-    });
-    else sendResponse(data);
+    response.end(data);
   });
 }
 
 const io = new Server(server, {
   path: '/api/socket.io',
-  pingInterval: 8000,
-  pingTimeout: 20000,
-  connectionStateRecovery: {
-    maxDisconnectionDuration: 120000,
-    skipMiddlewares: true,
-  },
+  pingInterval: 10000,
+  pingTimeout: 15000,
   perMessageDeflate: false, // Disabling compression on high-frequency small packets eliminates CPU lag & buffer bloat
-  maxHttpBufferSize: 256 * 1024,
+  maxHttpBufferSize: 1e6,
   cors: {
     origin: (origin, callback) => callback(null, !origin || allowedOrigins.has(origin)),
     credentials: true,
@@ -849,7 +805,6 @@ function compactState(state, full = false) {
     bx: typeof state.buildX === 'number' ? Math.round(state.buildX) : null, by: typeof state.buildY === 'number' ? Math.round(state.buildY) : null,
     sq: state.stateSeq || 0, tm: state.stateAt || Date.now(),
     trappedBy: state.trappedBy || null, trappedX: state.trappedX ?? null, trappedY: state.trappedY ?? null,
-    as: state.attackSeq || 0, aa: state.attackAt || 0,
   };
   if (full) {
     res.n = state.name || 'Oyuncu';
@@ -885,7 +840,6 @@ function compactMobTick(mob) {
     typeName: mob.typeName || '🐺 Kurt',
     state: mob.state || 'idle',
     hitFlash: mob.hitFlash || 0,
-    serverTime: Date.now(),
   };
 }
 
@@ -990,7 +944,6 @@ function publicMob(mob) {
     color: mob.color, outline: mob.outline, shape: mob.shape, eyes: mob.eyes,
     typeName: mob.typeName, dmg: mob.dmg, xpReward: mob.xpReward, goldReward: mob.goldReward,
     state: mob.state || 'idle',
-    serverTime: Date.now(),
     isBoss: false,
   };
 }
@@ -1310,7 +1263,6 @@ setInterval(() => {
   let count = 0;
   for (const [id, p] of players) {
     if (!p || (p.hp ?? 0) <= 0) continue;
-    if (p.isAttacking && Date.now() - (p.attackAt || 0) > 460) p.isAttacking = false;
     batch[id] = compactState(p, false);
     count++;
   }
@@ -1552,36 +1504,7 @@ io.on('connection', (socket) => {
         player.trappedUntil = 0;
       }
     }
-    if (!player.trappedBy && Number.isFinite(acceptedX) && Number.isFinite(acceptedY)) {
-      for (const building of nearbyBuildings(acceptedX, acceptedY, 100)) {
-        if (building.type === 5 || (building.hp ?? 100) <= 0) continue;
-        const bdx = acceptedX - building.x;
-        const bdy = acceptedY - building.y;
-        const distance = Math.hypot(bdx, bdy) || 0.01;
-        const collisionRadius = (Number(player.radius) || 35) + (building.type === 6 ? 42 : 36);
-        if (building.type === 6 && building.ownerId !== socket.id && distance < 52) {
-          const owner = players.get(building.ownerId);
-          if (!owner || !((owner.clanId && owner.clanId === player.clanId) || (owner.team && player.team && owner.team === player.team))) {
-            player.trappedBy = building.id;
-            player.trappedX = acceptedX;
-            player.trappedY = acceptedY;
-            player.trappedUntil = Date.now() + 4000;
-            player.vx = 0;
-            player.vy = 0;
-            socket.emit('trap_caught', { buildingId: building.id, x: acceptedX, y: acceptedY });
-            io.emit('trap_triggered', { buildingId: building.id, victimId: socket.id, x: acceptedX, y: acceptedY });
-            break;
-          }
-        }
-        if (distance < collisionRadius && distance > 0.01) {
-          const push = collisionRadius - distance;
-          acceptedX += (bdx / distance) * push;
-          acceptedY += (bdy / distance) * push;
-          needsPosCorrection = true;
-        }
-      }
-    }
-    for (const key of ['x', 'y', 'angle', 'vx', 'vy', 'weapon', 'axeTier', 'swordTier', 'team', 'color', 'skin', 'acc', 'buildX', 'buildY', 'maxHp', 'score', 'sc', 'kills', 'gold', 'wood', 'stone', 'apples', 'xp', 'rankId']) {
+    for (const key of ['x', 'y', 'angle', 'vx', 'vy', 'isAttacking', 'weapon', 'axeTier', 'swordTier', 'team', 'color', 'skin', 'acc', 'buildX', 'buildY', 'maxHp', 'score', 'sc', 'kills', 'gold', 'wood', 'stone', 'apples', 'xp', 'rankId']) {
       if (key === 'x' && Number.isFinite(acceptedX)) player.x = acceptedX;
       else if (key === 'y' && Number.isFinite(acceptedY)) player.y = acceptedY;
       else if (data[key] !== undefined) player[key] = data[key];
@@ -1627,9 +1550,6 @@ io.on('connection', (socket) => {
     const damage = Math.min(120, Math.round((weapon === 2 ? 30 : 22) * multiplier));
     const angle = Number(data.angle);
     if (!Number.isFinite(angle)) return;
-    attacker.isAttacking = true;
-    attacker.attackSeq = (attacker.attackSeq || 0) + 1;
-    attacker.attackAt = Date.now();
     const attackerX = Number(attacker.x) || 0, attackerY = Number(attacker.y) || 0;
     attacker.angle = angle;
     for (const [targetId, target] of players) {
@@ -1768,13 +1688,10 @@ io.on('connection', (socket) => {
     const target = players.get(data.victimId);
     const building = buildings.get(String(data.buildingId || ''));
     if (!target || target.hp <= 0) return;
-    if (target.trappedBy) return;
     if (!building || building.type !== 6 || (building.hp ?? 0) <= 0) return;
     if (building.ownerId === data.victimId) return;
     if (building.ownerId !== socket.id && data.victimId !== socket.id) return;
     if (owner && ((owner.clanId && owner.clanId === target.clanId) || (owner.team && target.team && owner.team === target.team))) return;
-    const touchDistance = Math.hypot((Number(target.x) || 0) - (Number(building.x) || 0), (Number(target.y) || 0) - (Number(building.y) || 0));
-    if (touchDistance > 110) return;
     target.trappedBy = building.id;
     target.trappedX = target.x;
     target.trappedY = target.y;
@@ -1787,12 +1704,8 @@ io.on('connection', (socket) => {
 
   socket.on('mob_trap_hit', (data = {}) => {
     const mob = mobs.get(String(data.mobId || ''));
-    const player = players.get(socket.id);
-    if (!mob || mob.hp <= 0 || !player || player.hp <= 0) return;
+    if (!mob || mob.hp <= 0) return;
     const b = buildings.get(String(data.buildingId || ''));
-    if (!b || b.type !== 6 || (b.hp ?? 100) <= 0 || b.ownerId !== socket.id) return;
-    if (Math.hypot((player.x || 0) - mob.x, (player.y || 0) - mob.y) > 180) return;
-    if (Math.hypot(b.x - mob.x, b.y - mob.y) > (mob.radius || 46) + 52) return;
     if (b && (b.hp ?? 100) > 0) {
       mob.trappedBy = data.buildingId;
       mob.trappedUntil = Date.now() + 4000;
@@ -1812,7 +1725,6 @@ io.on('connection', (socket) => {
     if (!owner || !target || !target.trappedBy || target.hp <= 0) return;
     const trap = buildings.get(target.trappedBy);
     if (!trap || trap.ownerId !== socket.id || (trap.hp ?? 0) <= 0 || Date.now() >= (target.trappedUntil || 0)) return;
-    if (Math.hypot((owner.x || 0) - (target.x || 0), (owner.y || 0) - (target.y || 0)) > 180) return;
     const dx = Number(data.dx);
     const dy = Number(data.dy);
     if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
@@ -1822,17 +1734,8 @@ io.on('connection', (socket) => {
     target.trappedY += (dy / length) * step;
     target.x = target.trappedX;
     target.y = target.trappedY;
-    const pushDx = (dx / length) * step;
-    const pushDy = (dy / length) * step;
-    io.to(data.victimId).emit('trap_victim_push', { dx: pushDx, dy: pushDy });
+    io.to(data.victimId).emit('trap_victim_push', { dx: (dx / length) * step, dy: (dy / length) * step });
     io.emit('players', { [target.id]: compactState(target) });
-    if (Math.hypot(target.x - trap.x, target.y - trap.y) > 90) {
-      target.trappedBy = null;
-      target.trappedX = null;
-      target.trappedY = null;
-      target.trappedUntil = 0;
-      io.emit('trap_freed', { buildingId: trap.id });
-    }
   });
 
   socket.on('train_board', () => {
@@ -1918,24 +1821,9 @@ io.on('connection', (socket) => {
   }
 
   const SERVER_BUILD_LIMITS = { 3: 25, 4: 7, 5: 12, 6: 8, 7: 4, 8: 35, 9: 12, 10: 4 };
-  const SERVER_BUILD_RADII = { 3: 42, 4: 58, 5: 50, 6: 58, 7: 45, 8: 36, 9: 64, 10: 32 };
-  function validBuildPosition(owner, data, type) {
-    const x = Number(data.x), y = Number(data.y);
-    if (!owner || !Number.isFinite(x) || !Number.isFinite(y)) return false;
-    if (Math.abs(x) > 3650 || Math.abs(y) > 3650) return false;
-    if (Math.hypot(x - (Number(owner.x) || 0), y - (Number(owner.y) || 0)) > 280) return false;
-    const radius = SERVER_BUILD_RADII[type] || 36;
-    for (const other of buildings.values()) {
-      if (other.hp <= 0 || other.ownerId !== owner.id) continue;
-      if (Math.hypot(x - other.x, y - other.y) < radius + (SERVER_BUILD_RADII[Number(other.type)] || 36) - 8) return false;
-    }
-    return true;
-  }
 
   socket.on('place_building', (data = {}) => {
     const bType = Number(data.type) || 3;
-    const owner = players.get(socket.id);
-    if (!SERVER_BUILD_RADII[bType] || !validBuildPosition(owner, data, bType)) return;
     const limit = SERVER_BUILD_LIMITS[bType] || 25;
     let ownedCount = 0;
     for (const b of buildings.values()) {
@@ -1949,7 +1837,8 @@ io.on('connection', (socket) => {
     }
 
     const id = data.id || `${socket.id}-${Date.now()}`;
-    const building = { ...data, x: Number(data.x), y: Number(data.y), type: bType, ownerId: socket.id, ownerClanId: owner?.clanId || '' };
+    const owner = players.get(socket.id);
+    const building = { ...data, ownerId: socket.id, ownerClanId: owner?.clanId || '' };
     if (bType === 6) {
       building.maxHp = Math.max(1800, Number(data.maxHp) || 0);
       building.hp = Math.min(building.maxHp, Math.max(building.maxHp * 0.9, Number(data.hp) || 0));
@@ -1961,8 +1850,6 @@ io.on('connection', (socket) => {
   socket.on('build', (data = {}) => {
     if (data.id) {
       const bType = Number(data.building?.type) || 3;
-      const owner = players.get(socket.id);
-      if (!SERVER_BUILD_RADII[bType] || !validBuildPosition(owner, data.building || {}, bType)) return;
       const limit = SERVER_BUILD_LIMITS[bType] || 25;
       let ownedCount = 0;
       for (const b of buildings.values()) {
@@ -1974,7 +1861,7 @@ io.on('connection', (socket) => {
         socket.emit('build_limit_reached', { type: bType, count: ownedCount, limit, clientId: data.id });
         return;
       }
-      const building = { ...data.building, x: Number(data.building.x), y: Number(data.building.y), type: bType, ownerId: socket.id, ownerClanId: owner?.clanId || '' };
+      const building = { ...data.building, ownerId: socket.id, ownerClanId: players.get(socket.id)?.clanId || '' };
       if (bType === 6) {
         building.maxHp = Math.max(1800, Number(data.building?.maxHp) || 0);
         building.hp = Math.min(building.maxHp, Math.max(building.maxHp * 0.9, Number(data.building?.hp) || 0));
@@ -1984,8 +1871,6 @@ io.on('connection', (socket) => {
     }
   });
   socket.on('build_destroy', ({ id } = {}) => {
-    const building = buildings.get(id);
-    if (!building || building.ownerId !== socket.id) return;
     buildings.delete(id);
     io.emit('build_destroy', { id });
     io.emit('trap_freed', { buildingId: id });
@@ -1995,9 +1880,7 @@ io.on('connection', (socket) => {
   });
   socket.on('building_hit', ({ id, dmg } = {}) => {
     const building = buildings.get(id);
-    const attacker = players.get(socket.id);
-    if (!building || !attacker || attacker.hp <= 0 || building.ownerId === socket.id) return;
-    if (Math.hypot((attacker.x || 0) - building.x, (attacker.y || 0) - building.y) > 190) return;
+    if (!building) return;
     const maxDamage = Number(building.type) === 6 ? 32 : 120;
     building.hp = Math.max(0, (building.hp ?? building.maxHp ?? 100) - Math.max(1, Math.min(maxDamage, Number(dmg) || 1)));
     io.emit('build_hp_update', { id, hp: building.hp });
