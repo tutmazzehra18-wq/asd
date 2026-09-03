@@ -14487,6 +14487,13 @@ function initMultiplayer() {
         existing._lastPacketTime = now;
         existing._sx = sx;
         existing._sy = sy;
+        existing._trappedBy = s.trappedBy || null;
+        existing._trappedX = Number.isFinite(s.trappedX) ? s.trappedX : (existing._trappedBy ? sx : undefined);
+        existing._trappedY = Number.isFinite(s.trappedY) ? s.trappedY : (existing._trappedBy ? sy : undefined);
+        if (typeof s.as === 'number' && s.as !== existing._attackSeq) {
+          existing._attackSeq = s.as;
+          existing._attackStartAt = Number(s.aa) || Date.now();
+        }
         // Stat fields — guard all: tick state omits static fields (n, sk, color, team, acc, tiers)
         // so we must not overwrite with undefined (those come once from player_join/welcome).
         if (s.hp   !== undefined) existing.hp          = s.hp;
@@ -14524,6 +14531,11 @@ function initMultiplayer() {
           _sx: sx, _sy: sy,
           _snapshots: [{ t: now, x: sx, y: sy, a: sa, vx: svx, vy: svy }],
           _netSeq: typeof s.sq === 'number' ? s.sq : 0,
+          _trappedBy: s.trappedBy || null,
+          _trappedX: Number.isFinite(s.trappedX) ? s.trappedX : undefined,
+          _trappedY: Number.isFinite(s.trappedY) ? s.trappedY : undefined,
+          _attackSeq: typeof s.as === 'number' ? s.as : 0,
+          _attackStartAt: Number(s.aa) || 0,
         };
         _otherPlayers.set(id, p);
       }
@@ -14551,6 +14563,11 @@ function initMultiplayer() {
       vx: _pjS.vx || 0, vy: _pjS.vy || 0, _lastPacketTime: Date.now(),
       _sx: _pjS.x ?? 0, _sy: _pjS.y ?? 0,
       _snapshots: [{ t: Date.now(), x: _pjS.x ?? 0, y: _pjS.y ?? 0, a: _pjS.a ?? 0, vx: _pjS.vx || 0, vy: _pjS.vy || 0 }],
+      _trappedBy: _pjS.trappedBy || null,
+      _trappedX: Number.isFinite(_pjS.trappedX) ? _pjS.trappedX : undefined,
+      _trappedY: Number.isFinite(_pjS.trappedY) ? _pjS.trappedY : undefined,
+      _attackSeq: typeof _pjS.as === 'number' ? _pjS.as : 0,
+      _attackStartAt: Number(_pjS.aa) || 0,
     });
     pushKillFeed(`🟢 ${_pjS.n || _pjS.name || '?'} oyuna katıldı!`);
   });
@@ -15008,8 +15025,8 @@ function initMultiplayer() {
       const victim = _otherPlayers.get(victimId);
       if (victim && b) {
         victim._trappedBy = bNetId;
-        victim._trappedX = victim.x;
-        victim._trappedY = victim.y;
+        victim._trappedX = Number.isFinite(x) ? x : victim.x;
+        victim._trappedY = Number.isFinite(y) ? y : victim.y;
         victim.vx = 0;
         victim.vy = 0;
       }
@@ -15038,11 +15055,13 @@ function initMultiplayer() {
   });
 
   // Trap caught — server froze us in a trap
-  _socket.on('trap_caught', ({ buildingId }) => {
+  _socket.on('trap_caught', ({ buildingId, x, y }) => {
     if (!player || player.dead) return;
     _trapCaughtBy = buildingId;
-    _trapCaughtX = player.x;
-    _trapCaughtY = player.y;
+    _trapCaughtX = Number.isFinite(x) ? x : player.x;
+    _trapCaughtY = Number.isFinite(y) ? y : player.y;
+    player.x = _trapCaughtX;
+    player.y = _trapCaughtY;
     player.vx = 0; player.vy = 0; player.momX = 0; player.momY = 0;
     playSound(180, 0.18, 'sawtooth', 0.35);
   });
@@ -15707,8 +15726,8 @@ function drawOtherPlayers() {
         if (p._trappedBy) {
           const _trb = _buildingsMap.get(p._trappedBy) || buildings.find(b => (b._netId === p._trappedBy || b.id === p._trappedBy || b._bLid === p._trappedBy));
           if (_trb && _trb.hp > 0) {
-            p.x = _trb.x;
-            p.y = _trb.y;
+            p.x = Number.isFinite(p._trappedX) ? p._trappedX : p.x;
+            p.y = Number.isFinite(p._trappedY) ? p._trappedY : p.y;
           } else {
             p._trappedBy = null;
           }
@@ -15720,6 +15739,7 @@ function drawOtherPlayers() {
 
     const pAcc = p.acc || {};
     const fl = (p.hp || 100) <= 0;
+    const _remoteAttackActive = Boolean(p.isAttacking && (!p._attackStartAt || Date.now() - p._attackStartAt < 460));
 
     // ── Block 1: rotated body + accessories ─────────────────────────────────
     ctx.save();
@@ -15749,7 +15769,7 @@ function drawOtherPlayers() {
       // ── Weapon + arms — identical style to local player ──────────────────
       {
         let swAng = 0;
-        if (p.isAttacking) {
+        if (_remoteAttackActive) {
           if (p.weapon >= 3) swAng = Math.sin(globalTime * 0.22) * 0.2;
           else               swAng = Math.sin(globalTime * 0.18) * (Math.PI / 1.8);
         }
@@ -15757,7 +15777,7 @@ function drawOtherPlayers() {
 
         // Weapon (only for axe/sword, not building items)
         if (p.weapon === 1 || p.weapon === 2) {
-          if (p.isAttacking && _qualityLevel >= 2) { ctx.shadowColor = p.weapon === 2 ? '#88ccff' : '#ffdd44'; ctx.shadowBlur = 16; }
+          if (_remoteAttackActive && _qualityLevel >= 2) { ctx.shadowColor = p.weapon === 2 ? '#88ccff' : '#ffdd44'; ctx.shadowBlur = 16; }
           const _otherWeaponKind = p.weapon === 1 ? 'axe' : 'sword';
           const _otherWeaponTier = p.weapon === 1 ? (p.axeTier ?? 0) : (p.swordTier ?? 0);
           const _otherWeaponImage = _weaponSprite(_otherWeaponKind, _otherWeaponTier);
@@ -15888,11 +15908,11 @@ function drawOtherPlayers() {
       }
 
       // Attack arc — matches local player arc size and trail style
-      if (p.isAttacking && (p.weapon === 1 || p.weapon === 2)) {
+      if (_remoteAttackActive && (p.weapon === 1 || p.weapon === 2)) {
         const arcA = Math.PI / 3.0;
         const hitR = p.weapon === 2 ? 132 : 115;
-        const _phaseOff = (p.name ? p.name.charCodeAt(0) * 0.37 : 0);
-        const _swingT = globalTime * 0.22 + _phaseOff;
+        const _attackElapsed = p._attackStartAt ? Math.max(0, Math.min(460, Date.now() - p._attackStartAt)) : 0;
+        const _swingT = (_attackElapsed / 460) * Math.PI;
         const swingOffset = Math.sin(_swingT) * arcA * 0.75;
         const swingPeak = Math.abs(Math.sin(_swingT));
 
