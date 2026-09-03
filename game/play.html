@@ -12756,8 +12756,14 @@ function update(timestamp = 0) {
       }
       // Server velocities are measured per 100 ms tick; convert to one render frame.
       const _drScale = _dt / 6;
-      e.x += (e.vx || 0) * _drScale;
-      e.y += (e.vy || 0) * _drScale;
+      const _mobStaleMs = now - (e._lastSeen || now);
+      if (_mobStaleMs <= 220) {
+        e.x += (e.vx || 0) * _drScale;
+        e.y += (e.vy || 0) * _drScale;
+      } else {
+        e.vx = 0;
+        e.vy = 0;
+      }
       // Soft lerp toward server-authoritative position to correct accumulated drift
       if (e._targetX !== undefined) {
         const _tdx = e._targetX - e.x, _tdy = e._targetY - e.y;
@@ -12780,81 +12786,6 @@ function update(timestamp = 0) {
         continue;
       }
 
-      // ── Visual collision correction — only for on-screen mobs, throttled ──
-      const _onScr = Math.abs(e.x - camX) < canvas.width / ZOOM * 0.65 && Math.abs(e.y - camY) < canvas.height / ZOOM * 0.65;
-      // PERF: gate the entire block on _onScr — off-screen mobs need no visual correction.
-      // Without this, the resource loop runs O(mobs × resources) even for mobs the player can't see.
-      if (_qualityLevel >= 1 && globalTime % 2 === 0 && _onScr) {
-        // Use spatial grid — only checks buildings within 120 world units (was O(N))
-        var _vcNear = _sgQuery(e.x, e.y, 120);
-        for (var _jvc = 0; _jvc < _vcNear.length; _jvc++) {
-          const b = _vcNear[_jvc];
-          const bdx = e.x - b.x, bdy = e.y - b.y;
-          const bRad = _BLD_RADII[b.type] || 36;
-          const minD = e.radius + bRad;
-          const bd2  = bdx * bdx + bdy * bdy;
-          if (bd2 < minD * minD && bd2 > 0) {
-            const bd = Math.sqrt(bd2);
-            e.x += (bdx / bd) * (minD - bd) * 0.7;
-            e.y += (bdy / bd) * (minD - bd) * 0.7;
-          }
-        }
-        // Resources are static world objects. Query only nearby grid cells
-        // instead of scanning every node for every visible mob.
-        var _resNear = _resQuery(e.x, e.y, 180);
-        for (let ri = 0; ri < _resNear.length; ri++) {
-          const res = _resNear[ri];
-          if (!res || res.hp === undefined || res.radius === undefined) continue;
-          const rdx = e.x - res.x, rdy = e.y - res.y;
-          const minD = e.radius + res.radius * 0.9;
-          // PERF: Component-wise fast reject — skips ~97% of resources with 2 comparisons before any multiply
-          if (Math.abs(rdx) > minD || Math.abs(rdy) > minD) continue;
-          const rd2  = rdx * rdx + rdy * rdy;
-          if (rd2 < minD * minD && rd2 > 0) {
-            const rd = Math.sqrt(rd2);
-            e.x += (rdx / rd) * (minD - rd) * 0.8;
-            e.y += (rdy / rd) * (minD - rd) * 0.8;
-          }
-        }
-      }
-      // ── Trap capture for online mobs — must run before continue ──────────
-      // Online mobs skip the offline AI block (including trap detection below).
-      // We handle traps here so server-controlled mobs still get caught.
-      if (e._capturedByTrap) {
-        // Verify trap still alive; release if destroyed or after 3s max hold
-        var _onTrapRef = _buildingsMap.get(e._capturedByTrap) || null;
-        if (_onTrapRef && _onTrapRef.hp > 0 && (!e._capturedTrapTime || now - e._capturedTrapTime < 3000)) {
-          e.vx = 0; e.vy = 0;
-          e.x = e._capturedTrapX; e.y = e._capturedTrapY;
-          e._targetX = e._capturedTrapX; e._targetY = e._capturedTrapY;
-          if (e._frozenAngle !== undefined) e.angle = e._frozenAngle;
-        } else {
-          e._capturedByTrap = null; e._capturedTrapX = undefined; e._capturedTrapY = undefined; e._frozenAngle = undefined; e._capturedTrapTime = undefined;
-        }
-      } else {
-        var _onTrNear = _sgQuery(e.x, e.y, 120);
-        for (var _jot = 0; _jot < _onTrNear.length; _jot++) {
-          var _otb = _onTrNear[_jot];
-          if (_otb.type !== 6 || _otb.hp <= 0) continue;
-          var _otdx = _otb.x - e.x, _otdy = _otb.y - e.y;
-          var _otd2 = _otdx * _otdx + _otdy * _otdy;
-          var _otMinD = e.radius + 52; // enlarged trap trigger radius
-          if (_otd2 > _otMinD * _otMinD) continue;
-          // First contact — capture mob at its current position
-          var _otKey = _otb._netId || _otb.id;
-          e._capturedByTrap = _otKey;
-          e._capturedTrapX = e.x; e._capturedTrapY = e.y;
-          e._capturedTrapTime = now;
-          e.vx = 0; e.vy = 0;
-          e._targetX = e.x; e._targetY = e.y;
-          e._frozenAngle = (e.angle !== undefined ? e.angle : 0);
-          playSound(220, 0.08, 'sine', 0.22);
-          if (_connected && _socket && e._netId && _otb._netId) {
-            _socket.emit('mob_trap_hit', { mobId: e._netId, buildingId: _otb._netId, frozenAngle: e._frozenAngle });
-          }
-          break;
-        }
-      }
       continue; // skip all offline AI below
     }
 
@@ -15246,7 +15177,7 @@ function initMultiplayer() {
       hitFlash: 0, typeName: m.typeName||'Düşman',
       dmg: m.dmg||10, speed: 0, xpReward: m.xpReward||25, goldReward: m.goldReward||5,
       provoked: true, lastHit: 0, lastBuildHit: 0, lastSpikeHit: 0, lastResHit: 0, lastHitSwingId: -1,
-      angle: 0, _lastSeen: now, isBoss: m.isBoss||false });
+      angle: 0, _lastSeen: now, _serverTime: Number(m.serverTime) || now, isBoss: m.isBoss||false });
     // Boss bar: show when a server boss mob spawns
     if (m.isBoss && !_serverBossId) {
       _serverBossId = m.id;
@@ -15277,6 +15208,7 @@ function initMultiplayer() {
         if (m.angle != null) ex.angle = m.angle;
         else if (m.vx !== 0 || m.vy !== 0) ex.angle = Math.atan2(m.vy, m.vx);
         ex._lastSeen = now;
+        ex._serverTime = Number(m.serverTime) || now;
         if (!ex.color && m.color) { ex.color = m.color; ex.outline = m.outline; ex.shape = m.shape||'wolf'; ex.eyes = m.eyes||'#ffee00'; ex.radius = m.radius||46; }
       } else if (m.id) {
         enemies.push({ _netId: m.id, x: m.x, y: m.y, _targetX: m.x, _targetY: m.y,
@@ -15286,7 +15218,7 @@ function initMultiplayer() {
           eyes: m.eyes||'#ffcc66', hitFlash: m.hitFlash||0, typeName: m.typeName||'🐺 Kurt',
           dmg: m.dmg||28, speed: 0, xpReward: m.xpReward||50, goldReward: m.goldReward||20,
           provoked: true, lastHit: 0, lastBuildHit: 0, lastSpikeHit: 0, lastResHit: 0, lastHitSwingId: -1,
-          angle: m.angle||0, _lastSeen: now, isBoss: m.isBoss||false });
+          angle: m.angle||0, _lastSeen: now, _serverTime: Number(m.serverTime) || now, isBoss: m.isBoss||false });
         if (m.isBoss && !_serverBossId) {
           _serverBossId = m.id;
           _serverBossName = m.typeName || '👑 Boss';
@@ -15329,6 +15261,7 @@ function initMultiplayer() {
         if (ang > -9000) ex.angle = ang;
         else if (vx !== 0 || vy !== 0) ex.angle = Math.atan2(vy, vx);
         ex._lastSeen = now;
+        ex._serverTime = now;
       } else {
         const mobNum = parseInt(String(id).replace(/\D/g, '')) || 1;
         const typeIndex = (mobNum - 1) % 4;
@@ -15346,7 +15279,7 @@ function initMultiplayer() {
           eyes: tDef.eyes, hitFlash: 0, typeName: tDef.typeName,
           dmg: tDef.dmg, speed: 0, xpReward: 80, goldReward: 35,
           provoked: true, lastHit: 0, lastBuildHit: 0, lastSpikeHit: 0, lastResHit: 0, lastHitSwingId: -1,
-          angle: ang > -9000 ? ang : 0, _lastSeen: now, isBoss: false
+          angle: ang > -9000 ? ang : 0, _lastSeen: now, _serverTime: now, isBoss: false
         };
         enemies.push(newMob);
         _enemyLocalMap.set(id, newMob);
@@ -15358,13 +15291,18 @@ function initMultiplayer() {
   _socket.on('mob_ids', (ids) => {
     if (!Array.isArray(ids)) return;
     _mobIdArr = ids; // keep for binary mob_states_b index decoding
-      if (ids.length === 0) return;
     const idSet = new Set(ids);
     for (let i = enemies.length - 1; i >= 0; i--) {
       if (enemies[i]._netId && !idSet.has(enemies[i]._netId)) enemies.splice(i, 1);
     }
     // Orphaned boss bar cleanup: hide if tracked boss is no longer in the mob list
     if (_serverBossId && !idSet.has(_serverBossId)) _hideServerBossBar();
+    if (ids.length === 0) {
+      enemies.length = 0;
+      _serverBossId = null;
+      _serverBossName = '';
+      _hideServerBossBar();
+    }
   });
 
   // ── Kill reward for the player who dealt the killing blow ─────────────
